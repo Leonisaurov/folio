@@ -440,6 +440,35 @@ por RAM y seguridad); framework declarativo externo (más dependencias).
 
 ---
 
+## ADR-027 — Vista web viva efímera y opt-in
+
+**Fecha**: 2026-10-29
+**Estado**: aceptada para 1.0
+
+**Contexto**: la vista web viva amplía la superficie de ataque: cookies, storage,
+descargas, permisos, procesos de render y contenido remoto. Debe ser opcional y no
+contaminar la bóveda ni la sesión.
+
+**Decisión**: compilar la vista viva solo con `--features webkit` (WebKitGTK 6.0).
+Cada bloque usa una `NetworkSession` efímera, cookie policy `Never`, sin
+almacenamiento local/base de datos/caché de página/WebGL, sin extras de desarrollo,
+sin acceso a `file://`, permisos denegados, ventanas emergentes bloqueadas y
+descargas canceladas. La carga exige confirmación explícita. Al desmontar el widget
+se llama a `terminate_web_process`; también hay un botón «Descargar contenido y
+cerrar». La URL se valida con el mismo esquema que las tarjetas (`http/https`).
+
+**Consecuencias**:
+- El binario base no depende de WebKit; Flatpak/AUR pueden ofrecer la feature.
+- Los tests de aislamiento se ejecutan en Xvfb con `scripts/webkit.sh`.
+- No hay cookies persistentes ni caché reutilizable entre bloques.
+- La feature no se incluye por defecto para no romper CI sin WebKit 6.0.
+
+**Alternativas**: WebView del sistema (no disponible en GTK4 de forma estable);
+vista viva por defecto (rechazada por seguridad y RAM); descargar HTML y renderizar
+con WebKit oculto (más complejo y sin interacción).
+
+---
+
 ## Plantilla para nuevas ADR
 
 ```markdown

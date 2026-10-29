@@ -19,7 +19,11 @@ libadwaita.workspace = true
 glib.workspace = true
 gio.workspace = true
 serde_json.workspace = true
+webkit6 = { version = "0.6", optional = true }
 tracing.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+
+[features]
+webkit = ["dep:webkit6"]

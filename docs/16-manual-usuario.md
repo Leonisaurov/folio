@@ -71,7 +71,10 @@ puntos; la exportación HTML conserva vectores SVG.
 - «Abrir» en un archivo pide confirmación y usa la aplicación del sistema.
 - La tarjeta web valida la URL (rechaza `javascript:`, `file:` y `data:`) y
   funciona sin red con los metadatos cacheados o un fallback.
-- La vista web viva es 1.0.
+- Si la app se compiló con `--features webkit`, un bloque en modo `live` ofrece
+  «Cargar vista viva» con confirmación. Usa un perfil efímero: sin cookies
+  persistentes, sin descargas, sin permisos y termina el proceso web al salir.
+  Sin WebKit se muestra la tarjeta y un aviso.
 
 ## 7. Buscar, previsualizar y exportar
 

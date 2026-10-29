@@ -3,6 +3,8 @@
 pub mod blocks;
 pub mod dialogs;
 pub mod helpers;
+#[cfg(feature = "webkit")]
+pub mod live_web;
 pub mod state;
 pub mod window;
 

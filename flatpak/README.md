@@ -9,6 +9,10 @@ flatpak-builder --force-clean --user --install build-dir flatpak/io.github.leoni
 flatpak run io.github.leonisauro.Folio --version
 ```
 
+La vista web viva es una feature opcional (`--features webkit`). Para incluirla
+en Flatpak hay que añadir WebKitGTK 6.0 como módulo o usar un runtime que lo
+provea, y compilar con `--features webkit`.
+
 `flatpak-cargo-generator.py` viene del repositorio `flatpak/flatpak-builder-tools`.
 El manifiesto compila `--offline --locked`: sin `cargo-sources.json` fallará a
 propósito en vez de descargar red durante el build.

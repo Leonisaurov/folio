@@ -18,7 +18,15 @@ log "Plan + calidad + tests"
 ./scripts/automation/all.sh --fast
 
 log "Build release"
-cargo build --release -p folio-app -p folio-tools
+FEATURE_ARGS=()
+if pkg-config --exists webkitgtk-6.0; then
+    log "WebKitGTK 6.0 detectado: se incluye la vista web viva"
+    FEATURE_ARGS=(--features webkit)
+else
+    warn "WebKitGTK 6.0 no disponible: release sin vista web viva."
+fi
+cargo build --release -p folio-app "${FEATURE_ARGS[@]}"
+cargo build --release -p folio-tools
 
 DIST="$ROOT/dist"
 NAME="folio-$VERSION-linux-x86_64"

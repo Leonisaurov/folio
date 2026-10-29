@@ -22,6 +22,15 @@ fn window_opens_document_canvas_and_preview() {
         .unwrap();
     let mut note = store.create_note(&book, "Nota de humo", &clock).unwrap();
     note.blocks.push(folio_core::Block::text_plain("hola"));
+    note.blocks.push(folio_core::Block::new(
+        "web",
+        folio_core::model::BlockContent::Web(folio_core::model::WebContent {
+            url: "https://example.com".into(),
+            mode: "live".into(),
+            title: "Ejemplo".into(),
+            ..Default::default()
+        }),
+    ));
     store.save_note(&book, &mut note, &clock).unwrap();
 
     let application = adw::Application::builder()

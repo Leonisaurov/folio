@@ -2,6 +2,17 @@
 
 Todas las fechas en formato ISO 8601. Este proyecto sigue [SemVer](https://semver.org/).
 
+## [1.0.0] — en curso
+
+### Semana 15 — vista web viva
+
+- WebKitGTK 6.0 tras feature flag `webkit`.
+- `NetworkSession` efímera, cookies `Never`, sin almacenamiento local, base de
+  datos, caché de página ni WebGL.
+- Permisos denegados, ventanas emergentes bloqueadas y descargas canceladas.
+- Confirmación explícita, descarga/terminación del proceso web al salir.
+- Pruebas de aislamiento en Xvfb (`scripts/webkit.sh`).
+
 ## [0.1.0] — 2026-10-29
 
 Primer MVP funcional de Folio. Implementa el plan E0–E13 con las limitaciones

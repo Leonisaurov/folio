@@ -931,7 +931,23 @@ Fecha de cierre del MVP: **2026-10-29**. Estado verificado con
 | E12 | Implementado (parcial) | 2026-10-29 | Teclado, claro/oscuro, estados vacíos, soak corto; auditoría a11y completa en 1.0 |
 | E13 | Implementado (parcial) | 2026-10-29 | Manifiestos Flatpak/AUR, AppStream, manual y `release.sh`; build en VM limpia pendiente |
 
-### 17.1 Desviaciones explícitas respecto al plan
+### 17.1 1.0 en curso
+
+| Semana | Foco | Estado | Evidencia |
+|---|---|---|---|
+| 15 | Vista web viva aislada | Implementado con feature flag | `cargo test -p folio-ui --features webkit --test webkit`; `scripts/webkit.sh` |
+| 16 | Cifrado de bóveda | Pendiente | — |
+| 17 | PDF y plugins 4–5 | Pendiente (plugins ya presentes) | — |
+| 18 | Accesibilidad y `.deb` | Pendiente | — |
+| 19 | Cierre de beta | Pendiente (requiere uso real) | — |
+| 20 | Release 1.0 | Pendiente | — |
+
+La vista viva usa `NetworkSession` efímera, deniega todos los permisos, cancela
+descargas, no persiste cookies ni almacenamiento local y termina el proceso web al
+desmontar el bloque. Se compila solo con `--features webkit`; sin la feature la app
+sigue funcionando y muestra la tarjeta.
+
+### 17.2 Desviaciones explícitas respecto al plan
 
 Estas desviaciones están registradas como ADR en `docs/10` y no cambian el
 formato de datos:
@@ -944,7 +960,8 @@ formato de datos:
    el lienzo, pero la tipografía de widgets GTK no se re-rasteriza con el zoom en
    el MVP. El refinado visual del zoom queda para 1.0.
 3. **Metadatos web**: la tarjeta web funciona con metadatos cacheados y fallback
-   offline; la descarga de metadatos y la vista viva son 1.0.
+   offline; la descarga automática de metadatos queda para 1.0. La vista viva ya
+   está implementada como feature opcional (ADR-027).
 4. **Accesibilidad**: hay navegación por teclado, nombres de acción y estados
    vacíos; la auditoría con lector de pantalla y escala 200 % es 1.0.
 5. **Flatpak/AUR**: los manifiestos y metadatos están; falta validar el build

@@ -27,12 +27,15 @@ plugins aislados con UI declarativa.
   vectorial y plugin.
 - **Plugins**: manifiestos, permisos, firma Ed25519, límites, aislamiento de panic
   y cinco ejemplos (`progress`, `chart`, `diagram`, `stats`, `quickbar`).
+- **Vista web viva** opcional con WebKitGTK 6.0 (`--features webkit`): sesión
+  efímera, sin cookies, sin descargas, permisos denegados y descarga al salir.
 - **Datos**: exportación Markdown/HTML sin scripts, importación Markdown saneada.
 - **Configuración**: un esquema único para TOML, CLI y GUI; precedencia y recarga.
 
-Limitaciones del MVP: el runtime WASM de terceros, PDF, cifrado, web viva, `.deb`
-y la auditoría completa de accesibilidad son 1.0 (ver [docs/12](docs/12-backlog-post-1.0.md)
-y ADR-023).
+Limitaciones del MVP: el runtime WASM de terceros, PDF, cifrado, `.deb` y la
+auditoría completa de accesibilidad son 1.0 (ver
+[docs/12](docs/12-backlog-post-1.0.md), ADR-023 y ADR-027). La vista web viva ya
+está disponible como feature opcional.
 
 ## Compilar y ejecutar
 
@@ -47,6 +50,8 @@ rustup component add rustfmt clippy
 
 ```bash
 cargo build --release
+# Vista web viva (requiere webkitgtk-6.0 / libwebkitgtk-6.0-dev):
+cargo build --release --features webkit
 ./target/release/folio --help
 ./target/release/folio vault init ~/Notas
 ./target/release/folio --vault ~/Notas
@@ -63,6 +68,7 @@ Sin argumentos abre la GUI. `folio --vault <ruta>` abre una bóveda concreta.
 ./scripts/security.sh                # sandbox, rutas, HTML, auditoría
 ./scripts/perf.sh                    # 10k notas, búsqueda, layout y arranque
 ./scripts/soak.sh --quick 30         # soak corto; sin --quick son 2 h
+./scripts/webkit.sh                  # aislamiento de la vista web viva
 ./bench/startup.sh                   # actualiza bench/baseline.json
 ```
 

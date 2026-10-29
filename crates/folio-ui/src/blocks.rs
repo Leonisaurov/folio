@@ -344,7 +344,7 @@ pub fn block_body(app: &Rc<App>, block: &Block, editable: bool) -> gtk::Widget {
         BlockContent::File(file) => render_file(app, file),
         BlockContent::Audio(audio) => render_media(app, &audio.asset, &audio.title, false),
         BlockContent::Video(video) => render_media(app, &video.asset, &video.title, true),
-        BlockContent::Web(web) => render_web(app, web),
+        BlockContent::Web(web) => render_web(app, block, web),
         BlockContent::Drawing(drawing) => render_drawing(app, block, drawing, editable),
         BlockContent::Plugin(plugin) => render_plugin(app, block, plugin),
         BlockContent::Raw(value) => {
@@ -634,7 +634,35 @@ fn render_media(app: &Rc<App>, asset: &str, title: &str, video: bool) -> gtk::Wi
     box_.upcast()
 }
 
-fn render_web(app: &Rc<App>, web: &folio_core::model::WebContent) -> gtk::Widget {
+fn render_web(app: &Rc<App>, block: &Block, web: &folio_core::model::WebContent) -> gtk::Widget {
+    if web.mode == "live" {
+        let enabled = app.state.borrow().config.bool("web.live_enabled");
+        if enabled {
+            #[cfg(feature = "webkit")]
+            {
+                return crate::live_web::render(app, block, web);
+            }
+        }
+        let hint = if enabled {
+            "La vista viva no está disponible en esta compilación; compila con --features webkit."
+        } else {
+            "La vista viva está desactivada (web.live_enabled = false). Se muestra la tarjeta segura."
+        };
+        let card = web_card(app, block, web);
+        let wrapper = gtk::Box::new(gtk::Orientation::Vertical, 4);
+        let label = gtk::Label::new(Some(hint));
+        label.set_wrap(true);
+        label.set_xalign(0.0);
+        label.add_css_class("caption");
+        wrapper.append(&label);
+        wrapper.append(&card);
+        return wrapper.upcast();
+    }
+    web_card(app, block, web)
+}
+
+fn web_card(app: &Rc<App>, block: &Block, web: &folio_core::model::WebContent) -> gtk::Widget {
+    let _ = block;
     let card = gtk::Box::new(gtk::Orientation::Vertical, 4);
     card.add_css_class("web-card");
     let title = gtk::Label::new(Some(if web.title.is_empty() {
@@ -683,6 +711,32 @@ fn render_web(app: &Rc<App>, web: &folio_core::model::WebContent) -> gtk::Widget
         );
     });
     row.append(&open);
+    #[cfg(feature = "webkit")]
+    {
+        if app.state.borrow().config.bool("web.live_enabled") {
+            let live = gtk::Button::with_label("Usar vista viva");
+            live.set_tooltip_text(Some(
+                "Perfil efímero: sin cookies, sin descargas, permisos denegados",
+            ));
+            let app = app.clone();
+            let block_id = block.id.clone();
+            live.connect_clicked(move |_| {
+                {
+                    let mut state = app.state.borrow_mut();
+                    if let Some(note) = state.current_note.as_mut()
+                        && let Some(block) = note.block_mut(&block_id)
+                        && let BlockContent::Web(web) = &mut block.content
+                    {
+                        web.mode = "live".into();
+                        state.dirty = true;
+                    }
+                }
+                app.refresh_editor();
+                app.schedule_save();
+            });
+            row.append(&live);
+        }
+    }
     card.append(&row);
     if web.fetched_at.is_none() {
         let hint = gtk::Label::new(Some(

@@ -34,3 +34,6 @@ toml.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+
+[features]
+webkit = ["folio-ui/webkit"]
