@@ -940,9 +940,9 @@ formato de datos:
    `UiNode`) y los cinco ejemplos funcionan, pero los ejemplos se ejecutan con el
    runtime de referencia en Rust. El cargador Wasmtime/WIT de terceros queda para
    1.0 (ADR-023). Los paquetes ya incluyen manifiesto y `.wasm` de marcador.
-2. **Zoom del lienzo**: las posiciones y tamaños escalan; la tipografía de widgets
-   GTK no se re-rasteriza con el zoom en el MVP. La edición a zoom < 50 % queda
-   para 1.0.
+2. **Zoom del lienzo**: las posiciones y tamaños escalan y la edición funciona en
+   el lienzo, pero la tipografía de widgets GTK no se re-rasteriza con el zoom en
+   el MVP. El refinado visual del zoom queda para 1.0.
 3. **Metadatos web**: la tarjeta web funciona con metadatos cacheados y fallback
    offline; la descarga de metadatos y la vista viva son 1.0.
 4. **Accesibilidad**: hay navegación por teclado, nombres de acción y estados

@@ -28,12 +28,7 @@ pub fn run(vault: Option<PathBuf>, config: Config, quit_after_init: bool) -> gli
     let config_startup = config.clone();
     application.connect_startup(move |application| {
         load_css();
-        let manager = adw::StyleManager::default();
-        match config_startup.string("ui.theme").as_str() {
-            "light" => manager.set_color_scheme(adw::ColorScheme::ForceLight),
-            "dark" => manager.set_color_scheme(adw::ColorScheme::ForceDark),
-            _ => manager.set_color_scheme(adw::ColorScheme::Default),
-        }
+        crate::window::apply_theme(&config_startup);
         application.set_accels_for_action("app.quit", &["<Control>q"]);
     });
 

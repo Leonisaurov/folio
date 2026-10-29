@@ -34,6 +34,7 @@ pub fn ensure_today(
     store: &Store,
     config: &Config,
     clock: &dyn Clock,
+    force_create: bool,
 ) -> Result<folio_store::Book, FolioError> {
     let daily = daily_config(config);
     let day = logical_day(clock.now(), &daily.timezone, daily.day_start_hour)?;
@@ -45,7 +46,8 @@ pub fn ensure_today(
             "los libros diarios están desactivados".into(),
         ));
     }
-    let should_create = folio_daily::should_create_on_open(&daily) || daily.create == "first_note";
+    let should_create =
+        force_create || folio_daily::should_create_on_open(&daily) || daily.create == "first_note";
     if !should_create {
         return Err(FolioError::NotFound(format!(
             "no hay libro para {} y la política es '{}'",
@@ -129,10 +131,18 @@ pub fn set_config_value(file: &Path, key: &str, raw: &str) -> Result<(), String>
         ),
         _ => serde_json::json!(raw),
     };
-    folio_config::write_value(file, key, &value).map_err(|error| error.to_string())?;
-    // Validar recargando; si falla, restaurar no es trivial con toml_edit, así
-    // que se valida el valor antes de escribir y después se informa el archivo.
-    Ok(())
+    // Validar sobre una copia antes de tocar el archivo real. Un valor fuera de
+    // rango no debe dejar el TOML inválido aunque la UI lo haya permitido.
+    let tmp = file.with_extension(format!("validate-{}", std::process::id()));
+    if file.exists() {
+        fs::copy(file, &tmp).map_err(|error| error.to_string())?;
+    }
+    folio_config::write_value(&tmp, key, &value).map_err(|error| error.to_string())?;
+    let env: HashMap<String, String> = HashMap::new();
+    let result = Config::load(Some(&tmp), None, &env).map_err(|error| error.to_string());
+    let _ = fs::remove_file(&tmp);
+    result?;
+    folio_config::write_value(file, key, &value).map_err(|error| error.to_string())
 }
 
 pub fn remember_vault(path: &Path) -> Result<(), FolioError> {
@@ -145,4 +155,9 @@ pub fn remember_vault(path: &Path) -> Result<(), FolioError> {
         .join("folio");
     std::fs::create_dir_all(&dir)?;
     folio_store::atomic::write_atomic(&dir.join("last_vault"), path.to_string_lossy().as_bytes())
+}
+
+pub fn today_date(config: &Config, clock: &dyn Clock) -> Result<String, FolioError> {
+    let daily = daily_config(config);
+    Ok(logical_day(clock.now(), &daily.timezone, daily.day_start_hour)?.date_string())
 }

@@ -6,5 +6,6 @@
 __pycache__/
 *.pyc
 /.folio/
+**/.folio/
 /dist/
 /flatpak/cargo-sources.json

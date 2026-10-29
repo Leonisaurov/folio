@@ -3,9 +3,9 @@
   "environment": "Xvfb 1440x900x24, release, python time + rusage",
   "notes": "RSS en Xvfb con renderizado software; el presupuesto de 150 MB se mide en sesión real.",
   "runs": 7,
-  "cold_start_ms": 2520.0,
-  "startup_ms_median": 523.0,
-  "startup_ms_p95": 540.0,
-  "startup_ms_min": 521.0,
-  "max_rss_kb": 297312
+  "cold_start_ms": 2561.0,
+  "startup_ms_median": 527.0,
+  "startup_ms_p95": 537.0,
+  "startup_ms_min": 518.0,
+  "max_rss_kb": 289908
 }

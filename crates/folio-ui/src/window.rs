@@ -31,6 +31,7 @@ pub struct App {
     pub autosave: Cell<Option<glib::SourceId>>,
     pub mode_label: gtk::Label,
     self_ref: RefCell<Weak<App>>,
+    config_monitors: RefCell<Vec<gio::FileMonitor>>,
 }
 
 impl App {
@@ -258,11 +259,14 @@ impl App {
             autosave: Cell::new(None),
             mode_label,
             self_ref: RefCell::new(Weak::new()),
+            config_monitors: RefCell::new(Vec::new()),
         });
         *app.self_ref.borrow_mut() = Rc::downgrade(&app);
 
         setup_actions(&app);
         connect_widgets(&app, &new_note, &new_book, &add_note, &today);
+        app.install_config_watch();
+        app.install_day_watch();
         app.refresh_all();
         app.window.present();
         app
@@ -895,11 +899,95 @@ impl App {
         None
     }
 
+    fn install_config_watch(&self) {
+        let root = self.state.borrow().store.root().to_path_buf();
+        let mut paths = vec![root.join("vault.toml")];
+        let global = folio_config::global_config_path();
+        if global != root.join("vault.toml") {
+            paths.push(global);
+        }
+        for path in paths {
+            if let Some(parent) = path.parent() {
+                let _ = std::fs::create_dir_all(parent);
+            }
+            let file = gio::File::for_path(&path);
+            let Ok(monitor) =
+                file.monitor_file(gio::FileMonitorFlags::NONE, None::<&gio::Cancellable>)
+            else {
+                continue;
+            };
+            let app = self.clone_ref();
+            let root = root.clone();
+            monitor.connect_changed(move |_, _, _, event| {
+                if event == gio::FileMonitorEvent::Deleted {
+                    return;
+                }
+                match crate::helpers::load_config(Some(&root)) {
+                    Ok(config) => {
+                        apply_theme(&config);
+                        app.state.borrow_mut().config = config;
+                        app.refresh_sidebar_inner_public();
+                        app.refresh_editor();
+                        app.set_status("Configuración recargada");
+                    }
+                    Err(error) => {
+                        app.state.borrow_mut().config_error = Some(error.clone());
+                        app.toast(&format!(
+                            "Configuración inválida; se conserva la anterior: {error}"
+                        ));
+                    }
+                }
+            });
+            self.config_monitors.borrow_mut().push(monitor);
+        }
+    }
+
+    fn install_day_watch(&self) {
+        let app = self.clone_ref();
+        glib::timeout_add_seconds_local(60, move || {
+            let (enabled, create) = {
+                let state = app.state.borrow();
+                let daily = crate::helpers::daily_config(&state.config);
+                (daily.enabled, daily.create.clone())
+            };
+            if enabled && create == "first_open" {
+                let before = {
+                    let state = app.state.borrow();
+                    crate::helpers::today_date(&state.config, &state.clock)
+                        .ok()
+                        .and_then(|date| state.store.daily_book(&date).ok().flatten())
+                        .map(|book| book.meta.id)
+                };
+                let result = {
+                    let state = app.state.borrow();
+                    crate::helpers::ensure_today(&state.store, &state.config, &state.clock, true)
+                };
+                if let Ok(book) = result
+                    && before.as_deref() != Some(book.meta.id.as_str())
+                {
+                    app.refresh_sidebar_inner_public();
+                    app.toast(&format!("Nuevo libro del día: {}", book.meta.title));
+                }
+            }
+            glib::ControlFlow::Continue
+        });
+    }
+
     pub fn clone_ref(&self) -> Rc<App> {
         self.self_ref
             .borrow()
             .upgrade()
             .expect("App vive mientras sus callbacks")
+    }
+}
+
+/// Aplica el tema del esquema al gestor de estilo de Libadwaita.
+pub fn apply_theme(config: &folio_config::Config) {
+    let manager = adw::StyleManager::default();
+    match config.string("ui.theme").as_str() {
+        "light" => manager.set_color_scheme(adw::ColorScheme::ForceLight),
+        "dark" => manager.set_color_scheme(adw::ColorScheme::ForceDark),
+        _ => manager.set_color_scheme(adw::ColorScheme::Default),
     }
 }
 
@@ -1136,6 +1224,10 @@ fn setup_actions(app: &Rc<App>) {
         drop(state);
         app.refresh_editor();
     });
+    install_action(app, "zoom-reset", |app| {
+        app.state.borrow_mut().canvas_scale = 1.0;
+        app.refresh_editor();
+    });
     install_action(app, "add-text-block", |app| app.insert_text_block());
     for kind in ["table", "drawing", "image", "file", "audio", "video", "web"] {
         let action = format!("add-{kind}");
@@ -1236,6 +1328,12 @@ fn setup_actions(app: &Rc<App>) {
         ("fit-all", "<Control>2"),
         ("zoom-in", "<Control>plus"),
         ("zoom-out", "<Control>minus"),
+        ("zoom-reset", "<Control>0"),
+        ("format-bold", "<Control>b"),
+        ("format-italic", "<Control>i"),
+        ("format-underline", "<Control>u"),
+        ("format-strikethrough", "<Control><Shift>x"),
+        ("format-code", "<Control><Shift>c"),
         ("settings", "<Control>comma"),
         ("undo", "<Control>z"),
         ("redo", "<Control><Shift>z"),

@@ -336,8 +336,8 @@ fn spans_from_buffer(
     spans
 }
 
-pub fn block_widget(app: &Rc<App>, block: &Block, editable: bool) -> gtk::Widget {
-    let body: gtk::Widget = match &block.content {
+pub fn block_body(app: &Rc<App>, block: &Block, editable: bool) -> gtk::Widget {
+    match &block.content {
         BlockContent::Text(text) => render_text_block(app, block, text, editable),
         BlockContent::Table(table) => render_table(app, block, table, editable),
         BlockContent::Image(image) => render_image(app, image),
@@ -356,7 +356,11 @@ pub fn block_widget(app: &Rc<App>, block: &Block, editable: bool) -> gtk::Widget
             label.add_css_class("unsupported");
             label.upcast()
         }
-    };
+    }
+}
+
+pub fn block_widget(app: &Rc<App>, block: &Block, editable: bool) -> gtk::Widget {
+    let body = block_body(app, block, editable);
     let wrapper = gtk::Box::new(gtk::Orientation::Vertical, 0);
     wrapper.add_css_class("folio-block-wrap");
     if editable {
@@ -1198,7 +1202,7 @@ pub fn canvas_block_widget(
     }
     header.append(&anchor);
     wrapper.append(&header);
-    let content = block_widget(app, block, false);
+    let content = block_body(app, block, true);
     wrapper.append(&content);
     // Arrastrar ancla el bloque en coordenadas del mundo.
     let gesture = gtk::GestureDrag::new();
@@ -1222,7 +1226,7 @@ pub fn canvas_block_widget(
         app_drag.refresh_editor();
         app_drag.schedule_save();
     });
-    wrapper.add_controller(gesture);
+    header.add_controller(gesture);
     wrapper.upcast()
 }
 

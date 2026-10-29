@@ -36,7 +36,9 @@ cleanup() {
     if [[ "${FOLIO_TEST_KEEP:-0}" == "1" ]]; then
         warn "Entorno temporal conservado: $TMP"
     else
-        rm -rf "$TMP"
+        # GVFS/D-Bus pueden crear archivos durante el apagado; la limpieza no
+        # debe convertir una suite verde en fallo.
+        rm -rf "$TMP" 2>/dev/null || true
     fi
 }
 trap cleanup EXIT

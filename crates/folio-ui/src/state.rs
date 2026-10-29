@@ -69,7 +69,9 @@ impl AppState {
         };
         if daily.enabled {
             // Abrir «Hoy» sin crear libros si la política es manual.
-            if let Ok(book) = helpers::ensure_today(&state.store, &state.config, &state.clock) {
+            if let Ok(book) =
+                helpers::ensure_today(&state.store, &state.config, &state.clock, false)
+            {
                 state.current_book = Some(book.meta.id);
             }
         }
@@ -192,7 +194,7 @@ impl AppState {
 
     pub fn today(&mut self) -> Result<Book, FolioError> {
         self.flush()?;
-        let book = helpers::ensure_today(&self.store, &self.config, &self.clock)?;
+        let book = helpers::ensure_today(&self.store, &self.config, &self.clock, true)?;
         self.current_book = Some(book.meta.id.clone());
         self.dirty = false;
         Ok(book)

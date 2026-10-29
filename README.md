@@ -77,8 +77,8 @@ privados. Detalle en [docs/15](docs/15-automatizacion.md).
 | Reconstruir índice de 10 000 notas | 4,1 s |
 | Búsqueda FTS con proceso incluido | 66 ms |
 | Layout de 500 bloques | 0,19 ms |
-| Arranque en caliente (mediana) | 523 ms |
-| Arranque en frío (Xvfb/llvmpipe) | 2,5 s |
+| Arranque en caliente (mediana) | 527 ms |
+| Arranque en frío (Xvfb/llvmpipe) | 2,56 s |
 
 El arranque en frío bajo Xvfb incluye la compilación de shaders de software; el
 presupuesto de 600 ms se mide en sesión real. `bench/baseline.json` guarda la

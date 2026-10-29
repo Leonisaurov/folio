@@ -274,7 +274,10 @@ def main() -> int:
         print("1.0: bloque de semanas 15–20 presente")
 
     # 4. Bloques de código equilibrados
+    ignored = {"target", ".artifacts", "dist", "build-dir", ".git", "node_modules"}
     for md in sorted(ROOT.rglob("*.md")):
+        if any(part in ignored for part in md.relative_to(ROOT).parts):
+            continue
         text = md.read_text(encoding="utf-8")
         fences = sum(1 for line in text.splitlines() if line.strip().startswith("```"))
         if fences % 2 != 0:
@@ -301,7 +304,10 @@ def main() -> int:
     # 5. Enlaces locales
     print("\nEnlaces locales:")
     broken = 0
+    ignored = {"target", ".artifacts", "dist", "build-dir", ".git", "node_modules"}
     for md in sorted(ROOT.rglob("*.md")):
+        if any(part in ignored for part in md.relative_to(ROOT).parts):
+            continue
         text = md.read_text(encoding="utf-8")
         for target in LINK_RE.findall(text):
             target = target.strip()
@@ -335,7 +341,9 @@ def main() -> int:
 
     # 7. Señales de alcance
     all_text = "\n".join(
-        p.read_text(encoding="utf-8") for p in sorted(ROOT.rglob("*.md"))
+        p.read_text(encoding="utf-8")
+        for p in sorted(ROOT.rglob("*.md"))
+        if not any(part in ignored for part in p.relative_to(ROOT).parts)
     )
     for term in ["spring-load", "Recomponer", "WASM", "SQLite", "TOML", "cifrada"]:
         if term.lower() not in all_text.lower():
