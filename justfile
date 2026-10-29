@@ -46,6 +46,12 @@ a11y:
 deb:
     ./scripts/build-deb.sh
 
+beta-check:
+    ./scripts/beta-check.sh
+
+beta:
+    ./scripts/beta.sh
+
 perf:
     ./scripts/perf.sh
 

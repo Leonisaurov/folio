@@ -198,6 +198,17 @@ Cada requisito del producto tiene una etapa que lo construye y una prueba que lo
 | RNF-18…RNF-20 recuperación | `cargo test -p folio-store backup trash versions`, `scripts/chaos.sh` |
 | RNF-21…RNF-22 aislamiento | `scripts/automation/ui.sh` (Xvfb privado), `keep-awake.sh` |
 
+### 9.4 Beta de 30 días (1.0, semana 19)
+
+| Requisito | Evidencia |
+|---|---|
+| Canal beta reproducible | `scripts/beta.sh`, `dist/beta/<versión>/CHANNEL.json`, `SHA256SUMS` |
+| Sin telemetría ni cliente de red | `scripts/beta-check.sh` (`cargo tree` + grep + `advanced.telemetry=false`) |
+| Migraciones/campos desconocidos | escenario `unknown_fields_preserved`; rechazo de `schema` futuro en `folio-core` |
+| Backup/restore y rollback | escenario `backup_verify_restore_ok`; `docs/20` protocolo |
+| Triage P0/P1 | `docs/20-beta-30-dias.md`, `.github/ISSUE_TEMPLATE/beta.md` |
+| Release 1.0 | `docs/21-release-1.0.md` (pendiente de firma y VM limpia) |
+
 ### 9.3 Accesibilidad y .deb (1.0, semana 18)
 
 | Requisito | Evidencia |

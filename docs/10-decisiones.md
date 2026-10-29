@@ -587,6 +587,32 @@ y menos control del contenido); no empaquetar (rechazado).
 
 ---
 
+## ADR-032 — Canal beta local, sin telemetría y con rollback probado
+
+**Fecha**: 2026-10-29
+**Estado**: aceptada para 1.0
+
+**Contexto**: la beta debe recoger feedback real durante 30 días sin introducir
+telemetría ni dependencias de red, y debe poder revertirse sin tocar datos.
+
+**Decisión**: `scripts/beta.sh` prepara un canal local en `dist/beta/<versión>`
+con `.deb`, binarios, checksums, informe de pre-beta y `CHANNEL.json` que declara
+`telemetry: false`. `scripts/beta-check.sh` ejecuta un escenario completo (bóveda,
+búsqueda, campos desconocidos, backup/restore, MD/HTML/PDF, cifrado y ausencia de
+clientes de telemetría/red). El feedback es manual, por issue/email. Los P0/P1 y
+el protocolo de rollback están en `docs/20-beta-30-dias.md`.
+
+**Consecuencias**:
+- La beta no envía datos ni depende de un servicio de analítica.
+- El canal se puede reproducir offline y verificar con `SHA256SUMS`.
+- La release 1.0 no se bloquea por telemetría; solo por P0/P1, migraciones y
+  validación en máquina limpia.
+
+**Alternativas**: telemetría opt-in (aún requiere infraestructura y confianza);
+crash reporting remoto (rechazado); beta solo interna (no valida uso real).
+
+---
+
 ## Plantilla para nuevas ADR
 
 ```markdown

@@ -78,6 +78,8 @@ Sin argumentos abre la GUI. `folio --vault <ruta>` abre una bóveda concreta.
 ./scripts/soak.sh --quick 30         # soak corto; sin --quick son 2 h
 ./scripts/a11y.sh                    # foco, etiquetas y escala 200 %
 ./scripts/build-deb.sh               # construye y verifica el .deb
+./scripts/beta-check.sh              # pre-beta: datos, backups, cifrado, sin telemetría
+./scripts/beta.sh                    # prepara dist/beta/<versión>
 ./scripts/webkit.sh                  # aislamiento de la vista web viva
 cargo test -p folio-store --test encryption  # strings, temporales, recuperación
 cargo test -p folio-render --test pdf_golden # PDF, paginación y lienzo
@@ -120,6 +122,8 @@ medición y su entorno.
 | Recuperación y backups | [docs/17-recuperacion.md](docs/17-recuperacion.md) |
 | Accesibilidad | [docs/18-accesibilidad.md](docs/18-accesibilidad.md) |
 | Empaquetado .deb | [docs/19-empaquetado.md](docs/19-empaquetado.md) |
+| Beta de 30 días | [docs/20-beta-30-dias.md](docs/20-beta-30-dias.md) |
+| Release 1.0 | [docs/21-release-1.0.md](docs/21-release-1.0.md) |
 | Automatización aislada | [docs/15-automatizacion.md](docs/15-automatizacion.md) |
 
 Resumen ejecutivo del plan: [PLAN.md](PLAN.md).

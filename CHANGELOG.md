@@ -4,6 +4,15 @@ Todas las fechas en formato ISO 8601. Este proyecto sigue [SemVer](https://semve
 
 ## [1.0.0] — en curso
 
+### Semana 19 — beta de 30 días
+
+- Canal beta local `dist/beta/<versión>` con `.deb`, binarios, checksums y
+  `CHANNEL.json` sin telemetría.
+- `beta-check.sh`: búsqueda, campos desconocidos, backup/restore, MD/HTML/PDF,
+  cifrado/descifrado y ausencia de clientes de red/telemetría.
+- Checklist de 30 días, triage P0/P1, migraciones y plan de rollback.
+- Preparado el release 1.0 de la semana 20.
+
 ### Semana 18 — accesibilidad y .deb
 
 - Etiquetas accesibles en botones de icono, foco visible y foco inicial.

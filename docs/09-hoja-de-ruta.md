@@ -929,7 +929,7 @@ Fecha de cierre del MVP: **2026-10-29**. Estado verificado con
 | E10 | Implementado (parcial) | 2026-10-29 | Manifiestos, permisos, firma, límites y 5 ejemplos; runtime WASM de terceros en 1.0 (ADR-023) |
 | E11 | Implementado | 2026-10-29 | Backups verificables, restore, papelera, versiones, `doctor`, caos |
 | E12 | Implementado (auditoría automatizada) | 2026-10-29 | Foco, etiquetas, escala 200 %, contraste, alternativa al lienzo; revisión manual con lector de pantalla pendiente |
-| E13 | Implementado (parcial) | 2026-10-29 | Manifiestos Flatpak/AUR, AppStream, `.deb`, manual y `release.sh`; build Flatpak/AUR en VM limpia pendiente |
+| E13 | Implementado (parcial) | 2026-10-29 | Manifiestos Flatpak/AUR, AppStream, `.deb`, canal beta y checklist de 30 días; build Flatpak/AUR en VM limpia y firma pendientes |
 
 ### 17.1 1.0 en curso
 
@@ -939,8 +939,8 @@ Fecha de cierre del MVP: **2026-10-29**. Estado verificado con
 | 16 | Cifrado de bóveda | Implementado | `crates/folio-store/tests/encryption.rs`; `folio vault init --encrypt`; bloqueo/desbloqueo GUI |
 | 17 | PDF y plugins 4–5 | Implementado | `folio export --format pdf`; `crates/folio-render/tests/pdf_golden.rs`; 5 plugins de referencia |
 | 18 | Accesibilidad y `.deb` | Implementado | `scripts/a11y.sh`; `scripts/build-deb.sh`; `.deb` verificado en árbol temporal |
-| 19 | Cierre de beta | Pendiente (requiere uso real) | — |
-| 20 | Release 1.0 | Pendiente | — |
+| 19 | Cierre de beta | Preparado | `scripts/beta.sh`; `docs/20-beta-30-dias.md`; triage P0/P1 y rollback |
+| 20 | Release 1.0 | Pendiente | `docs/21-release-1.0.md`; firma y Flatpak/AUR en VM limpia |
 
 La vista viva usa `NetworkSession` efímera, deniega todos los permisos, cancela
 descargas, no persiste cookies ni almacenamiento local y termina el proceso web al
