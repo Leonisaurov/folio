@@ -1,0 +1,16 @@
+id = "io.github.folio.quickbar"
+name = "Barra rápida"
+version = "1.0.0"
+description = "Botones de acción configurables."
+api = 1
+entry = "plugin.wasm"
+permissions = ["write_own_block"]
+
+[[blocks]]
+id = "quickbar"
+name = "Barra rápida"
+default_height = 80.0
+
+[[commands]]
+id = "render"
+name = "Renderizar"

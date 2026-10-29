@@ -1,0 +1,127 @@
+# Folio — notas y libros diarios
+
+**Folio** es una aplicación nativa de Linux para notas y libros diarios: rápida,
+local primero, con un editor híbrido entre documento lineal y lienzo infinito, y
+plugins aislados con UI declarativa.
+
+> Estado: **MVP 0.1.0 implementado** (etapas E0–E13, con las limitaciones
+> documentadas en [docs/09](docs/09-hoja-de-ruta.md#17-estado-de-avance)).
+> Binario: `folio`. ID de aplicación: `io.github.leonisauro.Folio`.
+>
+> Licencia de la app: GPL-3.0-or-later. SDK de plugins: MIT OR Apache-2.0.
+
+## Qué funciona hoy
+
+- **Bóveda**: archivos JSON legibles + assets direccionados por BLAKE3; SQLite/FTS5
+  solo como índice reconstruible. Escritura atómica, lock, watcher, papelera,
+  versiones y backups por hardlinks.
+- **Libros diarios**: día lógico con hora de corte, zonas IANA, DST, patrones en
+  español, backfill y renombrado sin duplicados.
+- **Notas**: orden manual fraccional, DnD dentro y entre libros, spring-load de
+  650 ms, «Mover a…», búsqueda y papelera.
+- **Editor**: texto enriquecido con tags, barra de formato, undo/redo, autosave,
+  recuperación tras crash, previsualización de solo lectura y contador.
+- **Lienzo**: flujo por defecto, bloques anclados, arrastre, zoom 25–400 %,
+  encuadres y «Recomponer».
+- **Bloques**: tabla editable, imagen, audio, vídeo, archivo, tarjeta web, dibujo
+  vectorial y plugin.
+- **Plugins**: manifiestos, permisos, firma Ed25519, límites, aislamiento de panic
+  y cinco ejemplos (`progress`, `chart`, `diagram`, `stats`, `quickbar`).
+- **Datos**: exportación Markdown/HTML sin scripts, importación Markdown saneada.
+- **Configuración**: un esquema único para TOML, CLI y GUI; precedencia y recarga.
+
+Limitaciones del MVP: el runtime WASM de terceros, PDF, cifrado, web viva, `.deb`
+y la auditoría completa de accesibilidad son 1.0 (ver [docs/12](docs/12-backlog-post-1.0.md)
+y ADR-023).
+
+## Compilar y ejecutar
+
+Dependencias del sistema en Arch:
+
+```bash
+sudo pacman -S --needed base-devel rustup pkgconf gtk4 libadwaita sqlite \
+  xorg-server-xvfb dbus
+rustup default stable
+rustup component add rustfmt clippy
+```
+
+```bash
+cargo build --release
+./target/release/folio --help
+./target/release/folio vault init ~/Notas
+./target/release/folio --vault ~/Notas
+```
+
+Sin argumentos abre la GUI. `folio --vault <ruta>` abre una bóveda concreta.
+
+## Verificación
+
+```bash
+./scripts/automation/all.sh          # plan + calidad + dominio + UI en Xvfb
+./scripts/automation/all.sh --fast   # sin UI
+./scripts/chaos.sh                   # kill -9 durante guardados y movimientos
+./scripts/security.sh                # sandbox, rutas, HTML, auditoría
+./scripts/perf.sh                    # 10k notas, búsqueda, layout y arranque
+./scripts/soak.sh --quick 30         # soak corto; sin --quick son 2 h
+./bench/startup.sh                   # actualiza bench/baseline.json
+```
+
+La UI de los tests **nunca** usa tu `DISPLAY`: `all.sh` arranca Xvfb y un D-Bus
+privados. Detalle en [docs/15](docs/15-automatizacion.md).
+
+Última medición (release, Xvfb 1440×900, 29/10/2026):
+
+| Métrica | Resultado |
+|---|---|
+| Generar 10 000 notas | 11,2 s |
+| Reconstruir índice de 10 000 notas | 4,1 s |
+| Búsqueda FTS con proceso incluido | 66 ms |
+| Layout de 500 bloques | 0,19 ms |
+| Arranque en caliente (mediana) | 523 ms |
+| Arranque en frío (Xvfb/llvmpipe) | 2,5 s |
+
+El arranque en frío bajo Xvfb incluye la compilación de shaders de software; el
+presupuesto de 600 ms se mide en sesión real. `bench/baseline.json` guarda la
+medición y su entorno.
+
+## Documentación
+
+| Si quieres… | Lee |
+|---|---|
+| Entender el producto | [docs/01-vision-alcance.md](docs/01-vision-alcance.md) |
+| Arquitectura técnica | [docs/02-arquitectura.md](docs/02-arquitectura.md) |
+| Modelo y persistencia | [docs/03-modelo-datos.md](docs/03-modelo-datos.md) |
+| UI, atajos y accesibilidad | [docs/04-experiencia-ui.md](docs/04-experiencia-ui.md) |
+| Configuración TOML/CLI/GUI | [docs/05-configuracion.md](docs/05-configuracion.md) |
+| Plugins y SDK | [docs/06-plugins.md](docs/06-plugins.md) y [plugins/README.md](plugins/README.md) |
+| Seguridad y rendimiento | [docs/07-seguridad-rendimiento.md](docs/07-seguridad-rendimiento.md) |
+| Pruebas y entrega | [docs/08-calidad-pruebas.md](docs/08-calidad-pruebas.md) |
+| Etapas, puertas y estado | [docs/09-hoja-de-ruta.md](docs/09-hoja-de-ruta.md) |
+| Decisiones y ADR | [docs/10-decisiones.md](docs/10-decisiones.md) |
+| Manual de usuario | [docs/16-manual-usuario.md](docs/16-manual-usuario.md) |
+| Recuperación y backups | [docs/17-recuperacion.md](docs/17-recuperacion.md) |
+| Automatización aislada | [docs/15-automatizacion.md](docs/15-automatizacion.md) |
+
+Resumen ejecutivo del plan: [PLAN.md](PLAN.md).
+
+## Estructura
+
+```text
+crates/
+├── folio-core/        # dominio puro (sin GTK, sin IO)
+├── folio-store/       # bóveda, archivos, índice, assets, backups
+├── folio-config/      # esquema TOML/CLI
+├── folio-daily/       # día lógico y patrones
+├── folio-layout/      # geometría de flujo y lienzo
+├── folio-render/      # Markdown, HTML e importación
+├── folio-plugins/     # manifiestos, permisos, runtime de referencia
+├── folio-plugin-sdk/  # contrato y UI declarativa
+├── folio-ui/          # GTK4/Libadwaita
+├── folio-app/         # binario `folio` y CLI
+└── folio-tools/       # generadores y benchmarks
+```
+
+## Contribuir
+
+Lee [CONTRIBUTING.md](CONTRIBUTING.md) y [AGENTS.md](AGENTS.md). Los cambios de
+alcance exigen ADR y actualizar `docs/09`.

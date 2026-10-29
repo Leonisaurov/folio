@@ -1,0 +1,20 @@
+[package]
+name = "folio-tools"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "folio-tools"
+path = "src/main.rs"
+
+[dependencies]
+folio-core = { path = "../folio-core" }
+folio-store = { path = "../folio-store" }
+folio-config = { path = "../folio-config" }
+folio-daily = { path = "../folio-daily" }
+folio-layout = { path = "../folio-layout" }
+clap.workspace = true
+serde_json.workspace = true
+jiff.workspace = true

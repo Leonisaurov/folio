@@ -1,0 +1,25 @@
+[package]
+name = "folio-ui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+folio-core = { path = "../folio-core" }
+folio-store = { path = "../folio-store" }
+folio-config = { path = "../folio-config" }
+folio-daily = { path = "../folio-daily" }
+folio-layout = { path = "../folio-layout" }
+folio-render = { path = "../folio-render" }
+folio-plugins = { path = "../folio-plugins" }
+folio-plugin-sdk = { path = "../folio-plugin-sdk" }
+gtk.workspace = true
+libadwaita.workspace = true
+glib.workspace = true
+gio.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

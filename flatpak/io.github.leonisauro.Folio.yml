@@ -1,0 +1,36 @@
+# Manifiesto Flatpak de referencia.
+# Antes de construir: genera las fuentes de Cargo con flatpak-cargo-generator.py
+# y guarda el resultado en flatpak/cargo-sources.json (ver flatpak/README.md).
+app-id: io.github.leonisauro.Folio
+runtime: org.gnome.Platform
+runtime-version: "49"
+sdk: org.gnome.Sdk
+command: folio
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --filesystem=home
+  - --talk-name=org.freedesktop.portal.Desktop
+  - --env=GSETTINGS_BACKEND=memory
+  - --env=GST_REGISTRY=/tmp/folio-gst-registry.bin
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+  env:
+    CARGO_HOME: /run/build/folio/cargo
+modules:
+  - name: folio
+    buildsystem: simple
+    build-commands:
+      - cargo build --release --offline --locked
+      - install -Dm755 target/release/folio /app/bin/folio
+      - install -Dm755 target/release/folio-tools /app/bin/folio-tools
+      - install -Dm644 flatpak/io.github.leonisauro.Folio.desktop /app/share/applications/io.github.leonisauro.Folio.desktop
+      - install -Dm644 flatpak/io.github.leonisauro.Folio.metainfo.xml /app/share/metainfo/io.github.leonisauro.Folio.metainfo.xml
+      - install -Dm644 flatpak/io.github.leonisauro.Folio.svg /app/share/icons/hicolor/scalable/apps/io.github.leonisauro.Folio.svg
+    sources:
+      - type: dir
+        path: ..
+      - type: file
+        path: cargo-sources.json

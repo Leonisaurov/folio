@@ -1,0 +1,16 @@
+id = "io.github.folio.diagram"
+name = "Diagramas"
+version = "1.0.0"
+description = "Diagrama a partir de un DSL de líneas y flechas."
+api = 1
+entry = "plugin.wasm"
+permissions = ["write_own_block"]
+
+[[blocks]]
+id = "diagram"
+name = "Diagrama"
+default_height = 320.0
+
+[[commands]]
+id = "render"
+name = "Renderizar"

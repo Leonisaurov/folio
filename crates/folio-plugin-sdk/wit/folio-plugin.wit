@@ -1,0 +1,54 @@
+// Contrato de referencia del plugin de Folio (API 1).
+package folio:plugin@1.0.0;
+
+interface types {
+  enum permission { read-notes, write-own-block, storage, network, clipboard, notifications }
+  record manifest {
+    id: string,
+    name: string,
+    version: string,
+    api: u32,
+    permissions: list<permission>,
+  }
+  // Árbol de UI declarativo. El host valida profundidad y tamaño.
+  variant ui-node {
+    column(list<ui-node>),
+    row(list<ui-node>),
+    label(string),
+    heading(string),
+    button(string),
+    checkbox(string),
+    slider(f64),
+    progress(f64),
+    chart(string),
+    diagram(string),
+    table(list<list<string>>),
+    separator,
+    spacer(f64),
+  }
+  record request {
+    command: string,
+    state: string,
+    payload: string,
+  }
+  record response {
+    state: string,
+    ui: ui-node,
+  }
+}
+
+interface host {
+  use types.{permission};
+  // Nunca hay acceso ambiental implícito: cada llamada comprueba permisos.
+  http-get: func(url: string) -> result<string, string>;
+  read-note: func() -> result<string, string>;
+  storage-get: func(key: string) -> result<string, string>;
+  storage-set: func(key: string, value: string) -> result<_, string>;
+  log: func(level: string, message: string);
+}
+
+world plugin {
+  import host;
+  use types.{manifest, request, response};
+  export render: func(request: request) -> result<response, string>;
+}

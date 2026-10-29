@@ -1,0 +1,12 @@
+schema = 1
+id = "01a1881a-2086-7525-ac7a-af0d835c439c"
+title = "Lienzo"
+kind = "manual"
+created_at = "2026-10-29T14:39:36.07057301Z"
+updated_at = "2026-10-29T14:39:36.07057301Z"
+icon = "x-office-document-symbolic"
+color = ""
+pinned = false
+archived = false
+sort = "manual"
+template = ""

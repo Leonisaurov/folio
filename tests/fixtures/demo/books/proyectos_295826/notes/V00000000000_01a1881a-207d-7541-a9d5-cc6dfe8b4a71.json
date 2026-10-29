@@ -1,0 +1,268 @@
+{
+  "schema": 1,
+  "id": "01a1881a-207d-7541-a9d5-cc6dfe8b4a71",
+  "title": "Demo de bloques",
+  "created_at": "2026-10-29T14:39:36.061149423Z",
+  "updated_at": "2026-10-29T14:39:36.062264727Z",
+  "layout": {
+    "mode": "flow",
+    "flow_width": 720.0,
+    "background": "paper",
+    "show_grid": false
+  },
+  "blocks": [
+    {
+      "id": "01a1881a-207e-715f-bbd1-77243c46c8f2",
+      "type": "text",
+      "placement": {
+        "kind": "flow"
+      },
+      "content": {
+        "paragraphs": [
+          {
+            "style": "h1",
+            "align": "left",
+            "indent": 0,
+            "checked": null,
+            "lang": null,
+            "spans": [
+              {
+                "text": "Demo de Folio",
+                "marks": []
+              }
+            ]
+          },
+          {
+            "style": "body",
+            "align": "left",
+            "indent": 0,
+            "checked": null,
+            "lang": null,
+            "spans": [
+              {
+                "text": "Texto con **negrita** y una lista.",
+                "marks": []
+              }
+            ]
+          },
+          {
+            "style": "list_item",
+            "align": "left",
+            "indent": 0,
+            "checked": null,
+            "lang": null,
+            "spans": [
+              {
+                "text": "Primer elemento",
+                "marks": []
+              }
+            ]
+          },
+          {
+            "style": "quote",
+            "align": "left",
+            "indent": 0,
+            "checked": null,
+            "lang": null,
+            "spans": [
+              {
+                "text": "Una cita",
+                "marks": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "01a1881a-207e-715f-bbd1-7725c18f422c",
+      "type": "table",
+      "placement": {
+        "kind": "flow"
+      },
+      "content": {
+        "rows": 3,
+        "cols": 3,
+        "header": true,
+        "widths": [
+          180.0,
+          180.0,
+          180.0
+        ],
+        "cells": [
+          {
+            "row": 0,
+            "col": 0,
+            "paragraphs": [
+              {
+                "style": "body",
+                "align": "left",
+                "indent": 0,
+                "checked": null,
+                "lang": null,
+                "spans": [
+                  {
+                    "text": "Mes",
+                    "marks": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "row": 0,
+            "col": 1,
+            "paragraphs": [
+              {
+                "style": "body",
+                "align": "left",
+                "indent": 0,
+                "checked": null,
+                "lang": null,
+                "spans": [
+                  {
+                    "text": "Ventas",
+                    "marks": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "row": 1,
+            "col": 0,
+            "paragraphs": [
+              {
+                "style": "body",
+                "align": "left",
+                "indent": 0,
+                "checked": null,
+                "lang": null,
+                "spans": [
+                  {
+                    "text": "Ene",
+                    "marks": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "row": 1,
+            "col": 1,
+            "paragraphs": [
+              {
+                "style": "body",
+                "align": "left",
+                "indent": 0,
+                "checked": null,
+                "lang": null,
+                "spans": [
+                  {
+                    "text": "30",
+                    "marks": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "row": 2,
+            "col": 0,
+            "paragraphs": [
+              {
+                "style": "body",
+                "align": "left",
+                "indent": 0,
+                "checked": null,
+                "lang": null,
+                "spans": [
+                  {
+                    "text": "Feb",
+                    "marks": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "row": 2,
+            "col": 1,
+            "paragraphs": [
+              {
+                "style": "body",
+                "align": "left",
+                "indent": 0,
+                "checked": null,
+                "lang": null,
+                "spans": [
+                  {
+                    "text": "70",
+                    "marks": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "01a1881a-207e-715f-bbd1-77261f1c7811",
+      "type": "drawing",
+      "placement": {
+        "kind": "flow"
+      },
+      "content": {
+        "version": 1,
+        "width": 1200.0,
+        "height": 800.0,
+        "background": "transparent",
+        "strokes": [
+          {
+            "tool": "",
+            "color": "",
+            "width": 0.0,
+            "points": [
+              [
+                40.0,
+                40.0
+              ],
+              [
+                200.0,
+                120.0
+              ],
+              [
+                320.0,
+                60.0
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "01a1881a-207e-715f-bbd1-77271ea400c6",
+      "type": "plugin",
+      "placement": {
+        "kind": "flow"
+      },
+      "content": {
+        "plugin": "io.github.folio.progress",
+        "block": "progress",
+        "schema": 1,
+        "state": {
+          "value": 0.4,
+          "target": 1.0,
+          "label": "Demo"
+        },
+        "height": 140.0
+      }
+    }
+  ],
+  "meta": {
+    "tags": [],
+    "word_count": 20,
+    "properties": {}
+  }
+}

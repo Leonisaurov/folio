@@ -1,0 +1,10 @@
+/target/
+/.artifacts/
+/build-dir/
+*.log
+
+__pycache__/
+*.pyc
+/.folio/
+/dist/
+/flatpak/cargo-sources.json

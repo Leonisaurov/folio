@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jardín</title>
+<style>
+:root { color-scheme: light dark; }
+body { margin: 0; padding: 32px; font-family: system-ui, sans-serif; background: #faf9f6; color: #1c1c1c; }
+.folio-note { position: relative; max-width: var(--flow-width); margin: 0 auto; }
+.note-title { font-size: 2.2rem; line-height: 1.15; }
+.block { margin: 12px 0; }
+.block-text p { line-height: 1.55; margin: 0.6em 0; }
+.style-h1, .style-h2, .style-h3 { line-height: 1.2; margin: 1.2em 0 0.4em; }
+.style-quote { border-left: 3px solid #3584e4; margin-left: 0; padding-left: 1em; color: #555; }
+.style-code { background: #eee; padding: 12px; border-radius: 6px; overflow-x: auto; }
+.list-item { display: flex; gap: 0.5em; line-height: 1.5; }
+.bullet { color: #3584e4; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+img, video { max-width: 100%; height: auto; border-radius: 6px; }
+figure { margin: 0; }
+figcaption, .tags { color: #666; font-size: 0.9em; }
+.web-card { border: 1px solid #ccc; border-radius: 8px; padding: 12px; }
+.unsupported { border: 1px dashed #c00; padding: 8px; color: #900; }
+@media (prefers-color-scheme: dark) {
+  body { background: #1c1c1c; color: #eee; }
+  .style-code, .web-card { background: #2a2a2a; }
+  th, td { border-color: #444; }
+  .style-quote { color: #bbb; }
+}
+
+</style></head><body>
+<article class="folio-note" style="--flow-width:720px">
+<h1 class="note-title">Jardín</h1>
+<p class="tags"><span class="tag">#casa</span> </p>
+<section class="block block-text">
+<h2 class="style-h2">Sección</h2>
+<p class="style-body">Hola <strong>mundo</strong> y <a href="https://example.com">enlace</a></p>
+<blockquote class="style-quote">Una cita</blockquote>
+<div class="list-item checklist" class="style-checklist_item"><input type="checkbox" disabled checked>hecho</div>
+</section>
+<section class="block block-table">
+<table>
+<tr><th>A</th><th>B</th></tr>
+<tr><td>1</td><td>2</td></tr>
+</table>
+</section>
+<section class="block block-image">
+<figure><img src="assets/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" alt="Croquis"><figcaption>Plano</figcaption></figure>
+</section>
+<section class="block block-web">
+<div class="web-card"><a href="https://example.com/articulo">Artículo</a><p>Resumen</p></div>
+</section>
+</article>
+</body></html>

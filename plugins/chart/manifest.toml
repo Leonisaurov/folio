@@ -1,0 +1,16 @@
+id = "io.github.folio.chart"
+name = "Gráficas"
+version = "1.0.0"
+description = "Gráfica de barras, línea o tarta; puede leer una tabla de la nota."
+api = 1
+entry = "plugin.wasm"
+permissions = ["read_notes", "write_own_block"]
+
+[[blocks]]
+id = "chart"
+name = "Gráfica"
+default_height = 280.0
+
+[[commands]]
+id = "render"
+name = "Renderizar"

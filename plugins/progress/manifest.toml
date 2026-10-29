@@ -1,0 +1,16 @@
+id = "io.github.folio.progress"
+name = "Progreso"
+version = "1.0.0"
+description = "Barra de progreso con objetivo y etiqueta."
+api = 1
+entry = "plugin.wasm"
+permissions = ["write_own_block", "storage"]
+
+[[blocks]]
+id = "progress"
+name = "Barra de progreso"
+default_height = 120.0
+
+[[commands]]
+id = "set"
+name = "Establecer valor"

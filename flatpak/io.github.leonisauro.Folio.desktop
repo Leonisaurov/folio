@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Folio
+GenericName=Notas y diario
+Comment=Notas y libros diarios con lienzo y plugins
+Exec=folio %U
+Icon=io.github.leonisauro.Folio
+Terminal=false
+Type=Application
+Categories=Office;
+MimeType=x-scheme-handler/folio;
+StartupNotify=true
+Keywords=notas;notes;diario;journal;canvas;

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.leonisauro.Folio</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Folio</name>
+  <summary>Notas y libros diarios con lienzo y plugins</summary>
+  <description>
+    <p>
+      Folio es un cuaderno diario y un sistema de notas local primero. Cada día
+      genera un libro renombrable; cada nota es un lienzo infinito que se comporta
+      como un documento lineal hasta que anclas un bloque.
+    </p>
+    <p>
+      El contenido vive en archivos JSON legibles con adjuntos direccionados por
+      contenido. SQLite es solo un índice reconstruible: tus datos sobreviven a la
+      aplicación.
+    </p>
+    <p>
+      Incluye texto enriquecido, tablas, dibujo, medios, tarjetas web, búsqueda
+      full-text, exportación Markdown/HTML y plugins aislados con permisos.
+    </p>
+    <ul>
+      <li>Libros diarios con hora de corte y zonas horarias</li>
+      <li>Editor y lienzo en la misma nota</li>
+      <li>Plugins de progreso, gráficas y diagramas</li>
+      <li>Sin red por defecto ni telemetría</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">io.github.leonisauro.Folio.desktop</launchable>
+  <!-- TODO(publicación): sustituir por la URL real del proyecto. -->
+  <url type="homepage">https://github.com</url>
+  <developer id="io.github.leonisauro">
+    <name>Folio contributors</name>
+  </developer>
+  <content_rating type="oars-1.1"/>
+  <categories>
+    <category>Office</category>
+  </categories>
+  <keywords>
+    <keyword>notes</keyword>
+    <keyword>notas</keyword>
+    <keyword>journal</keyword>
+    <keyword>diario</keyword>
+    <keyword>canvas</keyword>
+  </keywords>
+  <releases>
+    <release version="0.1.0" date="2026-10-29">
+      <description>
+        <p>Primer MVP: bóveda, libros diarios, editor, lienzo, búsqueda, exportación y plugins.</p>
+      </description>
+    </release>
+  </releases>
+</component>
