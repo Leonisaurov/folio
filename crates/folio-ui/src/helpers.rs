@@ -83,11 +83,21 @@ pub fn export_note(
     let path = match (format, out.extension()) {
         ("md" | "markdown", None) => out.with_extension("md"),
         ("html", None) => out.with_extension("html"),
+        ("pdf", None) => out.with_extension("pdf"),
         _ => out.to_path_buf(),
     };
     match format {
         "md" | "markdown" => folio_render::write_markdown(&path, &note, &options)?,
         "html" => folio_render::write_html(&path, &note, &options)?,
+        "pdf" => {
+            let resolver = |hash: &str| store.asset_display_path(hash).ok().flatten();
+            folio_render::pdf::write_pdf_with_assets(
+                &path,
+                &note,
+                &folio_render::pdf::PdfOptions::default(),
+                &resolver,
+            )?;
+        }
         other => return Err(FolioError::Unsupported(format!("formato {other}"))),
     }
     Ok(path)

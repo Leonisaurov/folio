@@ -4,6 +4,15 @@ Todas las fechas en formato ISO 8601. Este proyecto sigue [SemVer](https://semve
 
 ## [1.0.0] — en curso
 
+### Semana 17 — PDF y plugins
+
+- Exportación PDF A4 con Cairo/Pango: paginación, tablas, imágenes, medios,
+  tarjetas web, dibujos y página de lienzo con posiciones.
+- Callback de assets para bóvedas cifradas; nunca se ejecuta web viva.
+- Golden de texto extraído con `pdftotext` y pruebas de paginación.
+- Los cinco plugins de referencia cubren el catálogo 1.0 y el contrato `api = 1`
+  está congelado y documentado.
+
 ### Semana 16 — cifrado de bóveda
 
 - Argon2id + XChaCha20-Poly1305 con VK envuelta en `.folio/keyring.json`.

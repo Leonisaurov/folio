@@ -198,6 +198,17 @@ Cada requisito del producto tiene una etapa que lo construye y una prueba que lo
 | RNF-18…RNF-20 recuperación | `cargo test -p folio-store backup trash versions`, `scripts/chaos.sh` |
 | RNF-21…RNF-22 aislamiento | `scripts/automation/ui.sh` (Xvfb privado), `keep-awake.sh` |
 
+### 9.2 PDF (1.0, semana 17)
+
+| Requisito | Evidencia |
+|---|---|
+| PDF A4 paginado | `crates/folio-render/src/pdf.rs`, `tests/pdf_golden.rs::long_note_paginates_and_media_resolves` |
+| Canvas con posiciones | `write_pdf::draw_canvas_pages`, test `free_blocks_create_a_canvas_page` |
+| Imágenes/assets | `AssetResolver`, test `encrypted_style_asset_callback_is_used`; integración con `Store::asset_display_path` |
+| Golden PDF | `tests/golden/sample.pdf.txt` + `UPDATE_GOLDEN` |
+| Export CLI/GUI | `folio export --format pdf`, acción «Exportar PDF» |
+| Plugins/API | `crates/folio-plugins`, 5 manifiestos, `api = 1`; docs/06 |
+
 ### 9.1 Cifrado (1.0, semana 16)
 
 | Requisito | Evidencia |

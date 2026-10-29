@@ -1245,6 +1245,7 @@ fn setup_actions(app: &Rc<App>) {
     });
     install_action(app, "export-md", |app| export_dialog(app, "md"));
     install_action(app, "export-html", |app| export_dialog(app, "html"));
+    install_action(app, "export-pdf", |app| export_dialog(app, "pdf"));
     install_action(app, "import-md", |app| {
         let dialog = gtk::FileDialog::builder()
             .title("Importar Markdown")
@@ -1533,6 +1534,7 @@ fn build_menu() -> gio::Menu {
     let data = gio::Menu::new();
     data.append(Some("Exportar Markdown"), Some("win.export-md"));
     data.append(Some("Exportar HTML"), Some("win.export-html"));
+    data.append(Some("Exportar PDF"), Some("win.export-pdf"));
     data.append(Some("Importar Markdown"), Some("win.import-md"));
     data.append(Some("Crear backup"), Some("win.backup"));
     data.append(Some("Papelera"), Some("win.trash"));

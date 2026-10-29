@@ -454,6 +454,22 @@ mod tests {
     }
 
     #[test]
+    fn five_reference_plugins_and_frozen_api() {
+        let manifests = manifests();
+        assert_eq!(manifests.len(), 5);
+        assert!(manifests.iter().all(|manifest| manifest.api == 1));
+        for id in [
+            "io.github.folio.progress",
+            "io.github.folio.chart",
+            "io.github.folio.diagram",
+            "io.github.folio.stats",
+            "io.github.folio.quickbar",
+        ] {
+            assert!(manifests.iter().any(|manifest| manifest.id == id));
+        }
+    }
+
+    #[test]
     fn all_reference_plugins_render() {
         for manifest in manifests() {
             let request = Request {

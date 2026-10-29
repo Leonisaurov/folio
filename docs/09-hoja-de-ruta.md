@@ -937,7 +937,7 @@ Fecha de cierre del MVP: **2026-10-29**. Estado verificado con
 |---|---|---|---|
 | 15 | Vista web viva aislada | Implementado con feature flag | `cargo test -p folio-ui --features webkit --test webkit`; `scripts/webkit.sh` |
 | 16 | Cifrado de bóveda | Implementado | `crates/folio-store/tests/encryption.rs`; `folio vault init --encrypt`; bloqueo/desbloqueo GUI |
-| 17 | PDF y plugins 4–5 | Pendiente (plugins ya presentes) | — |
+| 17 | PDF y plugins 4–5 | Implementado | `folio export --format pdf`; `crates/folio-render/tests/pdf_golden.rs`; 5 plugins de referencia |
 | 18 | Accesibilidad y `.deb` | Pendiente | — |
 | 19 | Cierre de beta | Pendiente (requiere uso real) | — |
 | 20 | Release 1.0 | Pendiente | — |
@@ -972,6 +972,10 @@ formato de datos:
    vacíos; la auditoría con lector de pantalla y escala 200 % es 1.0.
 5. **Flatpak/AUR**: los manifiestos y metadatos están; falta validar el build
    reproducible en una VM limpia (requiere `flatpak-builder` y `appstreamcli`).
+6. **PDF**: el flujo se pagina y los bloques libres van a una página de lienzo
+   escalada; los plugins y la web se dibujan como tarjetas estáticas, no como
+   capturas interactivas. La rasterización exacta de plugins queda como refinamiento
+   de 1.0.
 
 Actualizar esta tabla al cerrar cada puerta. Es la única fuente de verdad del progreso.
 

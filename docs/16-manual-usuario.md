@@ -80,8 +80,10 @@ puntos; la exportación HTML conserva vectores SVG.
 
 - `Ctrl+P` enfoca la búsqueda global (FTS5, sin distinguir acentos).
 - La previsualización no permite editar.
-- Exporta Markdown o HTML desde el menú. El HTML es autocontenido, sin scripts y
-  conserva las posiciones de los bloques anclados.
+- Exporta Markdown, HTML o PDF desde el menú. El HTML es autocontenido, sin scripts
+  y conserva las posiciones de los bloques anclados. El PDF es A4 paginado, incluye
+  tablas, imágenes, medios y una página de lienzo con las posiciones de los bloques
+  anclados.
 - Importa Markdown desde el menú; el HTML crudo se descarta.
 
 ## 8. Plugins

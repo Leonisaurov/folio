@@ -197,6 +197,21 @@ pub fn export_note(request: ExportRequest<'_>) -> Result<PathBuf, FolioError> {
             folio_render::write_html(&path, &note, &options)?;
             Ok(path)
         }
+        "pdf" => {
+            let path = if request.out.extension().is_none() {
+                request.out.with_extension("pdf")
+            } else {
+                request.out.to_path_buf()
+            };
+            let resolver = |hash: &str| request.store.asset_display_path(hash).ok().flatten();
+            folio_render::pdf::write_pdf_with_assets(
+                &path,
+                &note,
+                &folio_render::pdf::PdfOptions::default(),
+                &resolver,
+            )?;
+            Ok(path)
+        }
         other => Err(FolioError::Unsupported(format!("formato {other}"))),
     }
 }

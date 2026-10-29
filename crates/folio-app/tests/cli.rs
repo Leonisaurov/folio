@@ -85,6 +85,22 @@ fn cli_end_to_end_vault_book_note_search_export() {
     assert!(html.contains("jardín"));
     assert!(!html.contains("<script"));
 
+    let pdf = dir.path().join("nota.pdf");
+    run(&[
+        "--vault",
+        vault.to_str().unwrap(),
+        "export",
+        "--format",
+        "pdf",
+        "--note",
+        &note_id,
+        "--out",
+        pdf.to_str().unwrap(),
+    ]);
+    let pdf_bytes = std::fs::read(&pdf).unwrap();
+    assert!(pdf_bytes.starts_with(b"%PDF-1."));
+    assert!(pdf_bytes.len() > 1000);
+
     let doctor = run(&["--vault", vault.to_str().unwrap(), "doctor", "--json"]);
     assert!(doctor.contains("\"notes\": 1"));
 

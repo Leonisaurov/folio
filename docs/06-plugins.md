@@ -479,3 +479,12 @@ cargo folio test
 - [ ] La UI del plugin respeta tema, escala y teclado.
 - [ ] Un tercero crea un plugin siguiendo solo la guía.
 - [ ] La API 1.0 queda congelada y documentada.
+
+
+## Estado de la API 1.0
+
+La API `api = 1` está congelada. El host valida manifiesto, versión semver, IDs de
+bloques/comandos y UI (profundidad ≤ 32, nodos ≤ 2000). Los cinco plugins de
+referencia (`progress`, `chart`, `diagram`, `stats`, `quickbar`) cubren el catálogo
+1.0. Los binarios WASM de terceros quedan detrás de `PluginRuntime` (ADR-023); el
+contrato y el paquete no cambian al habilitar Wasmtime.

@@ -1,4 +1,6 @@
-//! Exportadores Markdown/HTML e importador Markdown, sin dependencias de GTK.
+//! Exportadores Markdown/HTML/PDF e importador Markdown, sin dependencias de GTK.
+
+pub mod pdf;
 
 use folio_core::{
     Block, BlockContent, Clock, FolioError, Note,

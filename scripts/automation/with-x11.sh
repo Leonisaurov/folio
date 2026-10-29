@@ -30,30 +30,34 @@ require_cmd xvfb-run
 require_cmd dbus-run-session
 
 ARTIFACTS="$(new_artifacts_dir)"
-TMP="$(mktemp -d "${TMPDIR:-/tmp}/folio-x11.XXXXXX")"
+# En /tmp (tmpfs) la compilación de dependencias C puede agotar la cuota;
+# el entorno temporal vive en el artefacto, que está en disco.
+TMP="$(mktemp -d "$ARTIFACTS/tmp.XXXXXX")"
+# WebKit/bwrap necesita un runtime corto y accesible en /tmp.
+RUNTIME="$(mktemp -d "${TMPDIR:-/tmp}/folio-runtime.XXXXXX")"
 
 cleanup() {
     if [[ "${FOLIO_TEST_KEEP:-0}" == "1" ]]; then
-        warn "Entorno temporal conservado: $TMP"
+        warn "Entorno temporal conservado: $TMP (runtime: $RUNTIME)"
     else
         # GVFS/D-Bus pueden crear archivos durante el apagado; la limpieza no
         # debe convertir una suite verde en fallo.
-        rm -rf "$TMP" 2>/dev/null || true
+        rm -rf "$TMP" "$RUNTIME" 2>/dev/null || true
     fi
 }
 trap cleanup EXIT
 
 mkdir -p \
     "$TMP/home" "$TMP/config" "$TMP/cache" "$TMP/data" "$TMP/state" \
-    "$TMP/runtime" "$TMP/tmp" "$TMP/gst" "$TMP/vault" "$ARTIFACTS/screenshots"
-chmod 700 "$TMP/runtime"
+    "$TMP/tmp" "$TMP/gst" "$TMP/vault" "$ARTIFACTS/screenshots"
+chmod 700 "$RUNTIME"
 
 export HOME="$TMP/home"
 export XDG_CONFIG_HOME="$TMP/config"
 export XDG_CACHE_HOME="$TMP/cache"
 export XDG_DATA_HOME="$TMP/data"
 export XDG_STATE_HOME="$TMP/state"
-export XDG_RUNTIME_DIR="$TMP/runtime"
+export XDG_RUNTIME_DIR="$RUNTIME"
 export TMPDIR="$TMP/tmp"
 export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11

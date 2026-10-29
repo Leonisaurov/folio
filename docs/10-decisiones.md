@@ -505,6 +505,36 @@ GdkTexture/GStreamer en memoria; se puede refinar en 1.0).
 
 ---
 
+## ADR-029 — PDF con Cairo/Pango y lienzo paginado
+
+**Fecha**: 2026-10-29
+**Estado**: aceptada para 1.0
+
+**Contexto**: el PDF debe sobrevivir a la app, incluir tablas, imágenes y la
+posición visual de los bloques anclados, y ser verificable en CI sin depender de
+un navegador.
+
+**Decisión**: `folio-render::pdf` usa `cairo::PdfSurface` y PangoCairo. A4
+(595×842 pt), márgenes de 48 pt, paginación por bloques y párrafos, tablas con
+saltos de página, imágenes resueltas por un callback (`AssetResolver`) que el
+llamador conecta con la bóveda (y por tanto descifra si hace falta). Las tarjetas
+web y los plugins se dibujan como tarjetas estáticas; nunca se renderiza la vista
+web viva. Los bloques `free` van a una página «Lienzo» escalada a su bbox, con sus
+coordenadas. Metadatos de fecha fijos para golden determinista.
+
+**Consecuencias**:
+- Misma fuente de datos para MD/HTML/PDF; sin WebKit en el exportador.
+- Las imágenes se leen del archivo resuelto, por lo que funciona con bóvedas
+  cifradas usando la caché descifrada temporal.
+- El golden compara texto extraído con `pdftotext` normalizado, no bytes, para no
+  depender de la versión de fuentes/Cairo.
+- Los plugins se representan como tarjeta de estado, no como captura interactiva.
+
+**Alternativas**: WebKit print-to-PDF (dependencia y no determinista); Cairo a
+mano sin Pango (peor texto); PDF en 1.1 (rechazado).
+
+---
+
 ## Plantilla para nuevas ADR
 
 ```markdown
