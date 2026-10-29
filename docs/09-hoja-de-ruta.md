@@ -928,8 +928,8 @@ Fecha de cierre del MVP: **2026-10-29**. Estado verificado con
 | E9 | Implementado | 2026-10-29 | FTS5, previsualización, golden de render, importación MD |
 | E10 | Implementado (parcial) | 2026-10-29 | Manifiestos, permisos, firma, límites y 5 ejemplos; runtime WASM de terceros en 1.0 (ADR-023) |
 | E11 | Implementado | 2026-10-29 | Backups verificables, restore, papelera, versiones, `doctor`, caos |
-| E12 | Implementado (parcial) | 2026-10-29 | Teclado, claro/oscuro, estados vacíos, soak corto; auditoría a11y completa en 1.0 |
-| E13 | Implementado (parcial) | 2026-10-29 | Manifiestos Flatpak/AUR, AppStream, manual y `release.sh`; build en VM limpia pendiente |
+| E12 | Implementado (auditoría automatizada) | 2026-10-29 | Foco, etiquetas, escala 200 %, contraste, alternativa al lienzo; revisión manual con lector de pantalla pendiente |
+| E13 | Implementado (parcial) | 2026-10-29 | Manifiestos Flatpak/AUR, AppStream, `.deb`, manual y `release.sh`; build Flatpak/AUR en VM limpia pendiente |
 
 ### 17.1 1.0 en curso
 
@@ -938,7 +938,7 @@ Fecha de cierre del MVP: **2026-10-29**. Estado verificado con
 | 15 | Vista web viva aislada | Implementado con feature flag | `cargo test -p folio-ui --features webkit --test webkit`; `scripts/webkit.sh` |
 | 16 | Cifrado de bóveda | Implementado | `crates/folio-store/tests/encryption.rs`; `folio vault init --encrypt`; bloqueo/desbloqueo GUI |
 | 17 | PDF y plugins 4–5 | Implementado | `folio export --format pdf`; `crates/folio-render/tests/pdf_golden.rs`; 5 plugins de referencia |
-| 18 | Accesibilidad y `.deb` | Pendiente | — |
+| 18 | Accesibilidad y `.deb` | Implementado | `scripts/a11y.sh`; `scripts/build-deb.sh`; `.deb` verificado en árbol temporal |
 | 19 | Cierre de beta | Pendiente (requiere uso real) | — |
 | 20 | Release 1.0 | Pendiente | — |
 
@@ -968,8 +968,9 @@ formato de datos:
    en memoria tras desbloquear. Los backups antiguos en claro no se convierten
    automáticamente; hay que cifrarlos o eliminarlos. `logind` y la migración
    completa quedan para el cierre de 1.0.
-4. **Accesibilidad**: hay navegación por teclado, nombres de acción y estados
-   vacíos; la auditoría con lector de pantalla y escala 200 % es 1.0.
+4. **Accesibilidad**: hay navegación por teclado, etiquetas accesibles, foco
+   visible, escala 200 % probada y lista de bloques como alternativa al lienzo.
+   La revisión manual con lector de pantalla sigue pendiente para el cierre.
 5. **Flatpak/AUR**: los manifiestos y metadatos están; falta validar el build
    reproducible en una VM limpia (requiere `flatpak-builder` y `appstreamcli`).
 6. **PDF**: el flujo se pagina y los bloques libres van a una página de lienzo

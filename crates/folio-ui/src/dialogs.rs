@@ -807,3 +807,161 @@ pub fn prompt_unlock(app: &Rc<App>) {
         }
     });
 }
+
+/// Alternativa accesible al lienzo: lista de bloques con acciones de teclado.
+pub fn open_block_list(app: &Rc<App>) {
+    let blocks: Vec<(String, String, String, bool)> = {
+        let state = app.state.borrow();
+        let Some(note) = state.current_note.as_ref() else {
+            drop(state);
+            app.toast("Abre una nota primero");
+            return;
+        };
+        note.blocks
+            .iter()
+            .map(|block| {
+                (
+                    block.id.clone(),
+                    crate::blocks::kind_label(&block.kind),
+                    block
+                        .plain_text()
+                        .lines()
+                        .next()
+                        .unwrap_or_default()
+                        .to_string(),
+                    block.placement.is_free(),
+                )
+            })
+            .collect()
+    };
+    if blocks.is_empty() {
+        app.toast("La nota no tiene bloques");
+        return;
+    }
+    let window = gtk::Window::builder()
+        .title("Lista de bloques")
+        .default_width(640)
+        .default_height(520)
+        .modal(true)
+        .transient_for(&app.window)
+        .build();
+    let root = gtk::Box::new(gtk::Orientation::Vertical, 8);
+    root.set_margin_top(12);
+    root.set_margin_bottom(12);
+    root.set_margin_start(12);
+    root.set_margin_end(12);
+    let title = gtk::Label::new(Some("Alternativa al lienzo"));
+    title.set_xalign(0.0);
+    title.add_css_class("pane-title");
+    let hint = gtk::Label::new(Some(
+        "Recorre los bloques con Tab. Ctrl+Shift+B abre esta lista; Esc vuelve al documento desde el lienzo.",
+    ));
+    hint.set_wrap(true);
+    hint.set_xalign(0.0);
+    hint.add_css_class("caption");
+    root.append(&title);
+    root.append(&hint);
+    let scroller = gtk::ScrolledWindow::new();
+    scroller.set_vexpand(true);
+    let list = gtk::ListBox::new();
+    list.set_selection_mode(gtk::SelectionMode::Single);
+    list.update_property(&[gtk::accessible::Property::Label("Bloques de la nota")]);
+    scroller.set_child(Some(&list));
+    root.append(&scroller);
+    let close = gtk::Button::with_label("Cerrar");
+    close.set_halign(gtk::Align::End);
+    root.append(&close);
+    window.set_child(Some(&root));
+
+    for (index, (id, kind, preview, free)) in blocks.into_iter().enumerate() {
+        let row = gtk::ListBoxRow::new();
+        let content = gtk::Box::new(gtk::Orientation::Horizontal, 6);
+        content.set_margin_top(6);
+        content.set_margin_bottom(6);
+        content.set_margin_start(8);
+        content.set_margin_end(8);
+        let text = gtk::Label::new(Some(&format!(
+            "{}. {kind}{} — {preview}",
+            index + 1,
+            if free { " (anclado)" } else { "" }
+        )));
+        text.set_xalign(0.0);
+        text.set_hexpand(true);
+        text.set_ellipsize(gtk::pango::EllipsizeMode::End);
+        content.append(&text);
+        let up = gtk::Button::from_icon_name("go-up-symbolic");
+        up.set_tooltip_text(Some("Subir bloque"));
+        up.update_property(&[gtk::accessible::Property::Label("Subir bloque")]);
+        let down = gtk::Button::from_icon_name("go-down-symbolic");
+        down.set_tooltip_text(Some("Bajar bloque"));
+        down.update_property(&[gtk::accessible::Property::Label("Bajar bloque")]);
+        let anchor = gtk::Button::with_label(if free { "Al flujo" } else { "Anclar" });
+        let focus = gtk::Button::with_label("Editar");
+        let remove = gtk::Button::from_icon_name("user-trash-symbolic");
+        remove.set_tooltip_text(Some("Eliminar bloque"));
+        remove.update_property(&[gtk::accessible::Property::Label("Eliminar bloque")]);
+        content.append(&up);
+        content.append(&down);
+        content.append(&anchor);
+        content.append(&focus);
+        content.append(&remove);
+        row.set_child(Some(&content));
+        row.update_property(&[gtk::accessible::Property::Label(&format!(
+            "Bloque {}: {kind}",
+            index + 1
+        ))]);
+
+        let app_up = app.clone();
+        let window_up = window.clone();
+        let id_up = id.clone();
+        up.connect_clicked(move |_| {
+            app_up.state.borrow_mut().move_block(&id_up, -1);
+            app_up.refresh_editor();
+            app_up.schedule_save();
+            window_up.close();
+        });
+        let app_down = app.clone();
+        let window_down = window.clone();
+        let id_down = id.clone();
+        down.connect_clicked(move |_| {
+            app_down.state.borrow_mut().move_block(&id_down, 1);
+            app_down.refresh_editor();
+            app_down.schedule_save();
+            window_down.close();
+        });
+        let app_anchor = app.clone();
+        let window_anchor = window.clone();
+        let id_anchor = id.clone();
+        anchor.connect_clicked(move |_| {
+            app_anchor
+                .state
+                .borrow_mut()
+                .anchor_block(&id_anchor, !free);
+            app_anchor.refresh_editor();
+            app_anchor.schedule_save();
+            window_anchor.close();
+        });
+        let app_focus = app.clone();
+        let window_focus = window.clone();
+        focus.connect_clicked(move |_| {
+            {
+                let mut state = app_focus.state.borrow_mut();
+                state.mode = crate::state::ViewMode::Document;
+            }
+            app_focus.refresh_editor();
+            window_focus.close();
+        });
+        let app_remove = app.clone();
+        let window_remove = window.clone();
+        remove.connect_clicked(move |_| {
+            app_remove.state.borrow_mut().remove_block(&id);
+            app_remove.refresh_editor();
+            app_remove.schedule_save();
+            window_remove.close();
+        });
+        list.append(&row);
+    }
+    let window_close = window.clone();
+    close.connect_clicked(move |_| window_close.close());
+    window.present();
+}

@@ -35,10 +35,10 @@ plugins aislados con UI declarativa.
   importación Markdown saneada.
 - **Configuración**: un esquema único para TOML, CLI y GUI; precedencia y recarga.
 
-Limitaciones del MVP: el runtime WASM de terceros, `.deb` y la auditoría completa
-de accesibilidad son 1.0 (ver [docs/12](docs/12-backlog-post-1.0.md), ADR-023,
-ADR-027, ADR-028 y ADR-029). La vista web viva, el cifrado de bóveda y el PDF ya
-están disponibles.
+Limitaciones del MVP: el runtime WASM de terceros y la validación Flatpak/AUR en
+una VM limpia siguen pendientes; la auditoría de accesibilidad automatizada y el
+`.deb` ya están disponibles (ver [docs/12](docs/12-backlog-post-1.0.md), ADR-023,
+ADR-027, ADR-028, ADR-029 y ADR-030/031).
 
 ## Compilar y ejecutar
 
@@ -76,6 +76,8 @@ Sin argumentos abre la GUI. `folio --vault <ruta>` abre una bóveda concreta.
 ./scripts/security.sh                # sandbox, rutas, HTML, auditoría
 ./scripts/perf.sh                    # 10k notas, búsqueda, layout y arranque
 ./scripts/soak.sh --quick 30         # soak corto; sin --quick son 2 h
+./scripts/a11y.sh                    # foco, etiquetas y escala 200 %
+./scripts/build-deb.sh               # construye y verifica el .deb
 ./scripts/webkit.sh                  # aislamiento de la vista web viva
 cargo test -p folio-store --test encryption  # strings, temporales, recuperación
 cargo test -p folio-render --test pdf_golden # PDF, paginación y lienzo
@@ -116,6 +118,8 @@ medición y su entorno.
 | Decisiones y ADR | [docs/10-decisiones.md](docs/10-decisiones.md) |
 | Manual de usuario | [docs/16-manual-usuario.md](docs/16-manual-usuario.md) |
 | Recuperación y backups | [docs/17-recuperacion.md](docs/17-recuperacion.md) |
+| Accesibilidad | [docs/18-accesibilidad.md](docs/18-accesibilidad.md) |
+| Empaquetado .deb | [docs/19-empaquetado.md](docs/19-empaquetado.md) |
 | Automatización aislada | [docs/15-automatizacion.md](docs/15-automatizacion.md) |
 
 Resumen ejecutivo del plan: [PLAN.md](PLAN.md).

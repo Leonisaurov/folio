@@ -10,6 +10,30 @@ use libadwaita::prelude::*;
 
 use crate::blocks;
 use crate::dialogs;
+
+fn set_label(widget: &impl IsA<gtk::Accessible>, label: &str) {
+    widget.update_property(&[gtk::accessible::Property::Label(label)]);
+}
+
+fn ensure_icon_labels(widget: &gtk::Widget) {
+    if let Some(button) = widget.downcast_ref::<gtk::Button>()
+        && let Some(icon) = button.icon_name()
+        && button.tooltip_text().is_none()
+    {
+        let label = match icon.as_str() {
+            "go-previous-symbolic" => "Atrás".to_string(),
+            "go-next-symbolic" => "Adelante".to_string(),
+            other => other.trim_end_matches("-symbolic").replace('-', " "),
+        };
+        button.set_tooltip_text(Some(&label));
+        button.update_property(&[gtk::accessible::Property::Label(&label)]);
+    }
+    let mut child = widget.first_child();
+    while let Some(current) = child {
+        ensure_icon_labels(&current);
+        child = current.next_sibling();
+    }
+}
 use crate::state::{AppState, ViewMode};
 
 pub struct App {
@@ -43,6 +67,9 @@ impl App {
             .default_width(1240)
             .default_height(820)
             .build();
+        if state.config.bool("ui.reduce_motion") {
+            window.add_css_class("reduce-motion");
+        }
 
         let root = gtk::Box::new(gtk::Orientation::Vertical, 0);
         let toolbar = adw::ToolbarView::new();
@@ -53,16 +80,19 @@ impl App {
         let menu_button = gtk::MenuButton::new();
         menu_button.set_icon_name("open-menu-symbolic");
         menu_button.set_tooltip_text(Some("Menú principal"));
+        set_label(&menu_button, "Menú principal");
         let menu = build_menu();
         menu_button.set_menu_model(Some(&menu));
         header.pack_end(&menu_button);
 
         let new_note = gtk::Button::from_icon_name("document-new-symbolic");
         new_note.set_tooltip_text(Some("Nueva nota (Ctrl+N)"));
+        set_label(&new_note, "Nueva nota");
         header.pack_start(&new_note);
 
         let new_book = gtk::Button::from_icon_name("folder-new-symbolic");
         new_book.set_tooltip_text(Some("Nuevo libro (Ctrl+Shift+N)"));
+        set_label(&new_book, "Nuevo libro");
         header.pack_start(&new_book);
 
         toolbar.add_top_bar(&header);
@@ -82,6 +112,7 @@ impl App {
         sidebar_header.append(&library);
         let today = gtk::Button::from_icon_name("x-office-calendar-symbolic");
         today.set_tooltip_text(Some("Ir a hoy (Ctrl+Shift+H)"));
+        set_label(&today, "Ir a hoy");
         sidebar_header.append(&today);
         sidebar_box.append(&sidebar_header);
         let sidebar_scroll = gtk::ScrolledWindow::new();
@@ -89,6 +120,7 @@ impl App {
         sidebar_scroll.set_policy(gtk::PolicyType::Never, gtk::PolicyType::Automatic);
         let sidebar = gtk::ListBox::new();
         sidebar.set_selection_mode(gtk::SelectionMode::Single);
+        set_label(&sidebar, "Libros de la bóveda");
         sidebar.add_css_class("navigation-sidebar");
         sidebar_scroll.set_child(Some(&sidebar));
         sidebar_box.append(&sidebar_scroll);
@@ -107,10 +139,12 @@ impl App {
         notes_header.append(&notes_title);
         let add_note = gtk::Button::from_icon_name("list-add-symbolic");
         add_note.set_tooltip_text(Some("Nueva nota"));
+        set_label(&add_note, "Nueva nota");
         notes_header.append(&add_note);
         notes_box.append(&notes_header);
         let search_entry = gtk::SearchEntry::new();
         search_entry.set_placeholder_text(Some("Buscar en toda la bóveda"));
+        set_label(&search_entry, "Buscar en toda la bóveda");
         search_entry.set_margin_start(8);
         search_entry.set_margin_end(8);
         notes_box.append(&search_entry);
@@ -119,6 +153,7 @@ impl App {
         notes_scroll.set_policy(gtk::PolicyType::Never, gtk::PolicyType::Automatic);
         let notes = gtk::ListBox::new();
         notes.set_selection_mode(gtk::SelectionMode::Single);
+        set_label(&notes, "Notas del libro");
         notes.add_css_class("notes-list");
         notes_scroll.set_child(Some(&notes));
         notes_box.append(&notes_scroll);
@@ -129,6 +164,7 @@ impl App {
         let title_entry = gtk::Entry::new();
         title_entry.set_placeholder_text(Some("Título de la nota"));
         title_entry.add_css_class("note-title-entry");
+        set_label(&title_entry, "Título de la nota");
         title_entry.set_margin_top(14);
         title_entry.set_margin_start(24);
         title_entry.set_margin_end(24);
@@ -153,6 +189,7 @@ impl App {
             let button = gtk::Button::from_icon_name(icon);
             button.add_css_class("flat");
             button.set_tooltip_text(Some(tooltip));
+            set_label(&button, tooltip);
             // La acción se conecta después de crear App.
             button.set_widget_name(tag);
             button.set_action_name(Some(&format!("win.format-{tag}")));
@@ -169,17 +206,20 @@ impl App {
             let button = gtk::Button::with_label(label);
             button.add_css_class("flat");
             button.set_tooltip_text(Some(tag));
+            set_label(&button, tag);
             button.set_action_name(Some(&format!("win.style-{tag}")));
             format_bar.append(&button);
         }
         let link = gtk::Button::from_icon_name("insert-link-symbolic");
         link.add_css_class("flat");
         link.set_tooltip_text(Some("Enlace"));
+        set_label(&link, "Insertar enlace");
         link.set_action_name(Some("win.format-link"));
         format_bar.append(&link);
         let add_block = gtk::MenuButton::new();
         add_block.set_icon_name("list-add-symbolic");
         add_block.set_tooltip_text(Some("Insertar bloque"));
+        set_label(&add_block, "Insertar bloque");
         add_block.set_menu_model(Some(&build_block_menu()));
         add_block.add_css_class("flat");
         format_bar.append(&add_block);
@@ -189,11 +229,13 @@ impl App {
         let preview = gtk::Button::from_icon_name("view-reveal-symbolic");
         preview.add_css_class("flat");
         preview.set_tooltip_text(Some("Previsualización (Ctrl+Shift+E)"));
+        set_label(&preview, "Previsualización");
         preview.set_action_name(Some("win.preview"));
         format_bar.append(&preview);
         let canvas = gtk::Button::from_icon_name("view-fullscreen-symbolic");
         canvas.add_css_class("flat");
         canvas.set_tooltip_text(Some("Lienzo"));
+        set_label(&canvas, "Lienzo");
         canvas.set_action_name(Some("win.canvas"));
         format_bar.append(&canvas);
         editor_pane.append(&format_bar);
@@ -207,6 +249,7 @@ impl App {
         editor.set_margin_top(12);
         editor.set_margin_bottom(48);
         editor.set_hexpand(true);
+        set_label(&editor, "Contenido de la nota");
         editor_scroll.set_child(Some(&editor));
         editor_pane.append(&editor_scroll);
 
@@ -240,6 +283,7 @@ impl App {
         root.append(&overlay);
         toolbar.set_content(Some(&root));
         window.set_content(Some(&toolbar));
+        ensure_icon_labels(window.upcast_ref());
 
         let app = Rc::new(Self {
             state: RefCell::new(state),
@@ -272,6 +316,11 @@ impl App {
         app.install_auto_lock();
         app.refresh_all();
         app.window.present();
+        if app.state.borrow().current_note.is_some() {
+            app.title_entry.grab_focus();
+        } else {
+            app.search_entry.grab_focus();
+        }
         app
     }
 
@@ -375,6 +424,7 @@ impl App {
             }
             row.set_child(Some(&content));
             row.set_tooltip_text(Some(&book.folder));
+            set_label(&row, &format!("Libro {}", book.meta.title));
             let id = book.meta.id.clone();
             let app = self.clone_ref();
             row.connect_activate(move |_| {
@@ -490,6 +540,7 @@ impl App {
             content.append(&meta);
             row.set_child(Some(&content));
             row.set_tooltip_text(Some(&summary.id));
+            set_label(&row, &format!("Nota {}", summary.title));
             let id = summary.id.clone();
             let app = self.clone_ref();
             row.connect_activate(move |_| {
@@ -689,6 +740,23 @@ impl App {
         canvas_scroll.set_hexpand(true);
         canvas_scroll.set_vexpand(true);
         canvas_scroll.set_child(Some(&fixed));
+        set_label(&canvas_scroll, "Lienzo de la nota");
+        let app_escape = self.clone_ref();
+        let key = gtk::EventControllerKey::new();
+        key.connect_key_pressed(move |_, key, _, _| {
+            if key == gtk::gdk::Key::Escape {
+                {
+                    let mut state = app_escape.state.borrow_mut();
+                    state.mode = ViewMode::Document;
+                }
+                app_escape.refresh_editor();
+                app_escape.set_status("Documento");
+                glib::Propagation::Stop
+            } else {
+                glib::Propagation::Proceed
+            }
+        });
+        canvas_scroll.add_controller(key);
         let height = (total_h + 60.0).clamp(300.0, 4000.0);
         canvas_scroll.set_min_content_height(height as i32);
         self.editor.append(&canvas_scroll);
@@ -1373,6 +1441,7 @@ fn setup_actions(app: &Rc<App>) {
             }
         });
     });
+    install_action(app, "block-list", dialogs::open_block_list);
     install_action(app, "lock", |app| app.lock_vault());
     install_action(app, "unlock", dialogs::prompt_unlock);
     install_action(app, "about", |app| {
@@ -1448,6 +1517,7 @@ fn setup_actions(app: &Rc<App>) {
         ("redo", "<Control><Shift>z"),
         ("delete-note", "<Control>Delete"),
         ("lock", "<Control><Shift>l"),
+        ("block-list", "<Control><Shift>b"),
     ] {
         app.application
             .set_accels_for_action(&format!("win.{action}"), &[accel]);
@@ -1529,6 +1599,10 @@ fn build_menu() -> gio::Menu {
     view.append(Some("Encuadre documento"), Some("win.fit-document"));
     view.append(Some("Encuadre todo"), Some("win.fit-all"));
     view.append(Some("Rejilla"), Some("win.toggle-grid"));
+    view.append(
+        Some("Lista de bloques (alternativa al lienzo)"),
+        Some("win.block-list"),
+    );
     menu.append_section(None, &view);
 
     let data = gio::Menu::new();

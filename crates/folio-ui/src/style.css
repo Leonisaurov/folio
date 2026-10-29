@@ -32,3 +32,21 @@
 .welcome-title { font-size: 2rem; font-weight: 800; }
 .missing { color: #c01c28; }
 .unsupported { border: 1px dashed #c01c28; padding: 8px; border-radius: 6px; }
+
+button:focus-visible,
+entry:focus-visible,
+textview:focus-visible,
+list row:focus-visible,
+scale:focus-visible,
+dropdown:focus-visible {
+    box-shadow: inset 0 0 0 2px @accent_bg_color;
+    border-radius: 6px;
+}
+.titlebar:focus-visible { box-shadow: none; }
+
+.reduce-motion *,
+.reduce-motion *:hover,
+.reduce-motion *:active {
+    transition: none;
+    animation: none;
+}

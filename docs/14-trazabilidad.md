@@ -198,6 +198,17 @@ Cada requisito del producto tiene una etapa que lo construye y una prueba que lo
 | RNF-18…RNF-20 recuperación | `cargo test -p folio-store backup trash versions`, `scripts/chaos.sh` |
 | RNF-21…RNF-22 aislamiento | `scripts/automation/ui.sh` (Xvfb privado), `keep-awake.sh` |
 
+### 9.3 Accesibilidad y .deb (1.0, semana 18)
+
+| Requisito | Evidencia |
+|---|---|
+| Teclado/foco/etiquetas | `crates/folio-ui/tests/a11y.rs`, `scripts/a11y.sh` |
+| Escala 200 % y contraste de tema | `GDK_DPI_SCALE=2`, `apply_theme` claro/oscuro en el test |
+| Lector de pantalla | etiquetas `Property::Label`, roles GTK; revisión manual con Orca pendiente |
+| Alternativa al lienzo | `dialogs::open_block_list`, `Ctrl+Shift+B`, `Esc` vuelve al documento |
+| `.deb` verificable | `scripts/build-deb.sh`, `scripts/deb_build.py`, extracción + `--version` + AppStream |
+| Paquete FHS | binarios, desktop, metainfo, icono, manual, recuperación y copyright |
+
 ### 9.2 PDF (1.0, semana 17)
 
 | Requisito | Evidencia |

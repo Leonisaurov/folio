@@ -40,6 +40,12 @@ chaos:
 security:
     ./scripts/security.sh
 
+a11y:
+    ./scripts/a11y.sh
+
+deb:
+    ./scripts/build-deb.sh
+
 perf:
     ./scripts/perf.sh
 

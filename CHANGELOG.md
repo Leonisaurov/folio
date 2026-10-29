@@ -4,6 +4,14 @@ Todas las fechas en formato ISO 8601. Este proyecto sigue [SemVer](https://semve
 
 ## [1.0.0] — en curso
 
+### Semana 18 — accesibilidad y .deb
+
+- Etiquetas accesibles en botones de icono, foco visible y foco inicial.
+- Lista de bloques como alternativa completa al lienzo (`Ctrl+Shift+B`, `Esc`).
+- Auditoría automatizada con escala 200 %, puente a11y y tema claro/oscuro.
+- `.deb` reproducible con `scripts/build-deb.sh`; verificación por extracción,
+  ejecución de `--version` y AppStream, también sin `dpkg-deb`.
+
 ### Semana 17 — PDF y plugins
 
 - Exportación PDF A4 con Cairo/Pango: paginación, tablas, imágenes, medios,

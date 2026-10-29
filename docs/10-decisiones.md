@@ -535,6 +535,58 @@ mano sin Pango (peor texto); PDF en 1.1 (rechazado).
 
 ---
 
+## ADR-030 — Auditoría de accesibilidad y alternativa al lienzo
+
+**Fecha**: 2026-10-29
+**Estado**: aceptada para 1.0
+
+**Contexto**: el lienzo puede ser inaccesible para teclado y lectores de pantalla;
+los botones de icono no siempre tienen nombre; y la escala 200 % puede romper
+layouts.
+
+**Decisión**: auditoría automatizada en `scripts/a11y.sh` (Xvfb, escala 200 %,
+puente a11y), etiquetas `Property::Label` en todos los botones de icono, foco
+visible por CSS, título enfocado al abrir y una **lista de bloques** accesible
+(`Ctrl+Shift+B`) con acciones de subir/bajar/anclar/editar/eliminar. `Esc` sale del
+lienzo al documento. El tema claro/oscuro se prueba en vivo. Las animaciones se
+mantienen mínimas y se respeta `ui.reduce_motion` en el diseño.
+
+**Consecuencias**:
+- El canvas tiene una alternativa completa por teclado.
+- La auditoría automática cubre estructura y escala, pero no sustituye la revisión
+  con Orca/lector real, que queda como checklist de release.
+- Los botones internos de Libadwaita reciben una etiqueta de respaldo.
+
+**Alternativas**: canvas solo con ratón (rechazado); vista de lista como única
+opción (limita el producto); auditoría manual únicamente (no repetible).
+
+---
+
+## ADR-031 — Paquete .deb verificable sin privilegios
+
+**Fecha**: 2026-10-29
+**Estado**: aceptada para 1.0
+
+**Contexto**: Arch/AUR son el entorno de desarrollo, pero 1.0 exige un `.deb`
+instalable; en el entorno de desarrollo no hay `dpkg-deb` ni root.
+
+**Decisión**: `scripts/build-deb.sh` crea el árbol FHS y produce el paquete con
+`dpkg-deb` si existe; en su defecto usa `scripts/deb_build.py` (formato ar con
+`debian-binary`, `control.tar.gz` y `data.tar.gz`). La verificación extrae el
+paquete en un directorio temporal, comprueba archivos/permisos, ejecuta
+`folio --version` y valida AppStream. El paquete incluye binarios, desktop,
+metainfo, icono, manual, recuperación y copyright.
+
+**Consecuencias**:
+- El `.deb` se prueba en CI y en Arch sin privilegios.
+- Si `dpkg-deb` está disponible se usa la herramienta nativa.
+- La instalación real en una VM limpia sigue siendo una verificación manual.
+
+**Alternativas**: solo Flatpak (rechazado para 1.0); `cargo-deb` (dependencia extra
+y menos control del contenido); no empaquetar (rechazado).
+
+---
+
 ## Plantilla para nuevas ADR
 
 ```markdown
