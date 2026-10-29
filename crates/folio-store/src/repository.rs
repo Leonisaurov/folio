@@ -420,7 +420,14 @@ impl Store {
         let summaries = self.notes(book)?;
         let mut next = FIRST_KEY.to_string();
         for summary in &summaries {
-            let target = book.notes_dir().join(format!("{next}_{}.json", summary.id));
+            let mut target = book.notes_dir().join(format!("{next}_{}.json", summary.id));
+            // Nunca sobrescribir otra nota durante el rebalanceo: si la clave
+            // nueva ya está ocupada, se avanza hasta encontrar un hueco.
+            while target.exists() && target != summary.path {
+                next = key_after(Some(&next))
+                    .ok_or_else(|| FolioError::Conflict("rebalanceo agotado".into()))?;
+                target = book.notes_dir().join(format!("{next}_{}.json", summary.id));
+            }
             if target != summary.path {
                 fs::rename(&summary.path, &target)?;
             }
