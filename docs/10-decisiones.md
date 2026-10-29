@@ -469,6 +469,42 @@ con WebKit oculto (más complejo y sin interacción).
 
 ---
 
+## ADR-028 — Cifrado de bóveda con clave envuelta e índice efímero
+
+**Fecha**: 2026-10-29
+**Estado**: aceptada para 1.0
+
+**Contexto**: el cifrado debe ser opcional, no filtrar títulos ni contenido en
+archivos temporales, y permitir recuperación. SQLCipher añade complejidad de
+empaquetado; un índice SQLite en claro filtraría todo el texto.
+
+**Decisión**: VK aleatoria de 32 bytes; `KEK = Argon2id(password, salt, m=64 MiB,
+t=3, p=4)`; VK envuelta con XChaCha20-Poly1305 en `.folio/keyring.json` (0600).
+Cada archivo de datos se cifra con XChaCha20-Poly1305 y nonce aleatorio en formato
+`FOLIOENC1 || nonce || ciphertext`; `vault.toml` y el keyring quedan en claro
+(metadatos no secretos). En bóvedas cifradas el índice vive solo en memoria y se
+reconstruye al desbloquear. La frase de recuperación BIP39 de 24 palabras codifica
+la VK y se verifica contra un hash guardado en el keyring. La GUI descarta la clave
+y los buffers al bloquear; la caché de assets descifrados vive en
+`.folio/cache/plain` y se borra al bloquear. La CLI exige `--password`,
+`FOLIO_PASSWORD` o prompt.
+
+**Consecuencias**:
+- `strings` no encuentra títulos, cuerpo ni adjuntos en los archivos fuente.
+- Los temporales de escritura atómica se crean ya cifrados.
+- La búsqueda en bóvedas cifradas paga una reconstrucción de índice por proceso
+  CLI y una al desbloquear en GUI; es el precio de no persistir texto claro.
+- Los nombres de carpetas nuevas son opacos; una bóveda existente conserva sus
+  carpetas al cifrarse.
+- La recuperación no depende del keyring para descifrar, solo para verificar que
+  la frase pertenece a la bóveda.
+
+**Alternativas**: SQLCipher (más dependencias y claves en el proceso); cifrar solo
+notas (filtra book.toml y assets); no persistir assets descifrados (requiere
+GdkTexture/GStreamer en memoria; se puede refinar en 1.0).
+
+---
+
 ## Plantilla para nuevas ADR
 
 ```markdown

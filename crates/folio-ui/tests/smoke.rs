@@ -68,4 +68,26 @@ fn window_opens_document_canvas_and_preview() {
     app.refresh_editor();
     pump(100);
     app.window.close();
+
+    // Bóveda cifrada: bloquear descarta la clave y desbloquear reconstruye.
+    let encrypted_dir = tempfile::tempdir().unwrap();
+    let (store, _phrase) =
+        Store::init_encrypted(encrypted_dir.path(), "Cifrada", &clock, "contraseña-larga").unwrap();
+    let state = folio_ui::state::AppState::new(store, Config::defaults()).unwrap();
+    let encrypted_app = folio_ui::window::App::new(state, &application);
+    {
+        let mut state = encrypted_app.state.borrow_mut();
+        state.lock();
+        assert!(state.locked);
+        assert!(!state.store.is_unlocked());
+    }
+    encrypted_app.refresh_all();
+    {
+        let mut state = encrypted_app.state.borrow_mut();
+        assert!(state.unlock("contraseña-larga").is_ok());
+        assert!(!state.locked);
+        assert!(state.store.is_unlocked());
+    }
+    encrypted_app.refresh_all();
+    encrypted_app.window.close();
 }

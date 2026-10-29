@@ -100,6 +100,29 @@ folio --vault ~/Notas plugin install plugins/chart --allow-unsigned
 folio --vault ~/Notas plugin disable io.github.folio.chart
 ```
 
+## 8.1 Bóvedas cifradas
+
+```bash
+folio vault init ~/Notas --encrypt
+folio --vault ~/Notas --password '...' note create --book today --title Hola
+folio --vault ~/Notas vault encrypt   # cifrar una bóveda existente (haz backup)
+FOLIO_PASSWORD='...' folio --vault ~/Notas search jardín
+folio --vault ~/Notas --password '...' vault decrypt
+```
+
+- La contraseña no se guarda; se deriva Argon2id y se envuelve la VK.
+- Al crear la bóveda se muestra **una sola vez** una frase de recuperación de 24
+  palabras. Guárdala: sin contraseña ni frase, los datos no se pueden recuperar.
+- La GUI pide la contraseña al abrir y bloquea por inactividad
+  (`vault.auto_lock_min`, 15 min por defecto). También puedes bloquear con
+  `Ctrl+Shift+L`.
+- En bóvedas cifradas el índice SQLite no se escribe: se reconstruye en memoria.
+- El contenido de `vault.toml` y `.folio/keyring.json` no es secreto; el resto de
+  archivos está cifrado. Los assets descifrados solo existen en caché temporal y
+  se borran al bloquear.
+- Si olvidaste la contraseña, usa la frase de recuperación en el diálogo de
+  desbloqueo o con `--recovery`.
+
 ## 9. Ajustes
 
 Menú → **Ajustes** (`Ctrl+,`). La ventana se genera del esquema: busca por nombre,

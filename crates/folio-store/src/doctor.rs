@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::atomic::{ensure_dir, write_atomic};
 use crate::index::Index;
-use crate::repository::{Store, load_note_file};
+use crate::repository::Store;
 use crate::vault::Vault;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,7 +44,7 @@ pub fn repair(store: &Store, reindex: bool) -> Result<DoctorReport, FolioError> 
             if !name.ends_with(".json") {
                 continue;
             }
-            match load_note_file(&entry.path()) {
+            match store.load_note_at(&entry.path()) {
                 Ok(note) => {
                     notes += 1;
                     for hash in referenced_assets(&note) {
@@ -76,7 +76,13 @@ pub fn repair(store: &Store, reindex: bool) -> Result<DoctorReport, FolioError> 
 
     let mut reindexed = 0;
     if reindex {
-        let mut index = Index::open(&vault.index_path())?;
+        // En bóvedas cifradas el índice vive solo en memoria: un SQLite en
+        // claro filtraría títulos y contenido.
+        let mut index = if store.is_encrypted() {
+            Index::open_in_memory()?
+        } else {
+            Index::open(&vault.index_path())?
+        };
         reindexed = index.rebuild(store)?;
     }
 
@@ -101,15 +107,28 @@ fn uuid_stamp() -> String {
 }
 
 /// Escribe un snapshot de recuperación (journal de autosave).
-pub fn write_recovery(vault: &Vault, note: &Note) -> Result<PathBuf, FolioError> {
+pub fn write_recovery(
+    vault: &Vault,
+    note: &Note,
+    cipher: Option<&crate::crypto::Cipher>,
+) -> Result<PathBuf, FolioError> {
     let dir = vault.folio_dir().join("recovery");
     ensure_dir(&dir)?;
     let path = dir.join(format!("{}.json", note.id));
-    write_atomic(&path, serde_json::to_vec_pretty(note)?.as_slice())?;
+    let json = serde_json::to_vec_pretty(note)?;
+    let bytes = match cipher {
+        Some(cipher) => cipher.encrypt(&json)?,
+        None => json,
+    };
+    write_atomic(&path, &bytes)?;
     Ok(path)
 }
 
-pub fn read_recovery(vault: &Vault, note_id: &str) -> Result<Option<Note>, FolioError> {
+pub fn read_recovery(
+    vault: &Vault,
+    note_id: &str,
+    cipher: Option<&crate::crypto::Cipher>,
+) -> Result<Option<Note>, FolioError> {
     let path = vault
         .folio_dir()
         .join("recovery")
@@ -117,7 +136,14 @@ pub fn read_recovery(vault: &Vault, note_id: &str) -> Result<Option<Note>, Folio
     if !path.exists() {
         return Ok(None);
     }
-    Ok(Some(load_note_file(&path)?))
+    let bytes = fs::read(&path)?;
+    let bytes = match cipher {
+        Some(cipher) => cipher.decrypt(&bytes)?,
+        None => bytes,
+    };
+    let note = Note::from_json(&bytes)?;
+    note.validate()?;
+    Ok(Some(note))
 }
 
 pub fn clear_recovery(vault: &Vault, note_id: &str) -> Result<(), FolioError> {
@@ -182,7 +208,7 @@ mod tests {
             }),
         ));
         store.save_note(&book, &mut note, &clock).unwrap();
-        crate::assets::import_bytes(&store.vault, b"huerfano", "txt").unwrap();
+        crate::assets::import_bytes(&store.vault, b"huerfano", "txt", None).unwrap();
         let report = repair(&store, false).unwrap();
         assert_eq!(report.orphan_assets.len(), 1);
         assert_eq!(report.missing_assets, vec![missing]);

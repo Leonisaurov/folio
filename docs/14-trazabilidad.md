@@ -197,3 +197,15 @@ Cada requisito del producto tiene una etapa que lo construye y una prueba que lo
 | RNF-10…RNF-12 seguridad | `scripts/security.sh`, tests de assets/URL/HTML/plugins |
 | RNF-18…RNF-20 recuperación | `cargo test -p folio-store backup trash versions`, `scripts/chaos.sh` |
 | RNF-21…RNF-22 aislamiento | `scripts/automation/ui.sh` (Xvfb privado), `keep-awake.sh` |
+
+### 9.1 Cifrado (1.0, semana 16)
+
+| Requisito | Evidencia |
+|---|---|
+| VK, Argon2id, XChaCha20-Poly1305 | `crates/folio-store/src/crypto.rs`, tests `wrap_unlock_and_recovery`, `encrypt_decrypt_and_tamper` |
+| Archivos y temporales sin texto claro | `crates/folio-store/tests/encryption.rs`, `cli_encrypted_vault_requires_password_and_leaks_no_plaintext` |
+| Assets, versiones y papelera cifrados | `encryption.rs::lock_blocks_io_and_versions_trash_are_encrypted` |
+| Índice reconstruible sin persistir texto | `Store::open_index`, `AppState::new`, `doctor`, tests de cifrado |
+| Frase de recuperación | `Cipher::from_recovery`, test de recuperación con frase correcta/ajena |
+| Auto-bloqueo y desbloqueo GUI | `App::install_auto_lock`, `dialogs::prompt_unlock`, smoke de bloqueo/desbloqueo |
+| CLI/GUI sin clave en claro en logs | `commands::open_store`, `--password`/`FOLIO_PASSWORD`; no se registra la clave |

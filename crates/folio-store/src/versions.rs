@@ -25,6 +25,7 @@ pub fn maybe_snapshot(
     note: &Note,
     clock: &dyn Clock,
     force: bool,
+    cipher: Option<&crate::crypto::Cipher>,
 ) -> Result<Option<PathBuf>, FolioError> {
     let dir = version_dir(vault, &note.id);
     ensure_dir(&dir)?;
@@ -42,8 +43,12 @@ pub fn maybe_snapshot(
         return Ok(Some(path));
     }
     let json = serde_json::to_vec_pretty(note)?;
-    let compressed = zstd::encode_all(json.as_slice(), 3).map_err(std::io::Error::other)?;
-    write_atomic(&path, &compressed)?;
+    let compressed = zstd::encode_all(json.as_slice(), 3)?;
+    let bytes = match cipher {
+        Some(cipher) => cipher.encrypt(&compressed)?,
+        None => compressed,
+    };
+    write_atomic(&path, &bytes)?;
     prune(vault, &note.id, 50, 30, clock)?;
     Ok(Some(path))
 }
@@ -75,9 +80,13 @@ pub fn list(vault: &Vault, note_id: &str) -> Result<Vec<VersionEntry>, FolioErro
     Ok(versions)
 }
 
-pub fn read(path: &Path) -> Result<Note, FolioError> {
+pub fn read(path: &Path, cipher: Option<&crate::crypto::Cipher>) -> Result<Note, FolioError> {
     let compressed = fs::read(path)?;
-    let json = zstd::decode_all(compressed.as_slice()).map_err(std::io::Error::other)?;
+    let compressed = match cipher {
+        Some(cipher) => cipher.decrypt(&compressed)?,
+        None => compressed,
+    };
+    let json = zstd::decode_all(compressed.as_slice())?;
     Note::from_json(&json)
 }
 
@@ -87,9 +96,10 @@ pub fn restore(
     note_id: &str,
     path: &Path,
     clock: &dyn Clock,
+    cipher: Option<&crate::crypto::Cipher>,
 ) -> Result<Note, FolioError> {
     let _ = vault;
-    let mut note = read(path)?;
+    let mut note = read(path, cipher)?;
     note.id = note_id.to_string();
     note.updated_at = clock.now_rfc3339();
     Ok(note)
@@ -142,15 +152,15 @@ mod tests {
         // Dentro de 5 minutos no se crea otra.
         clock.advance_ms(1000);
         assert!(
-            maybe_snapshot(&store.vault, &note, &clock, false)
+            maybe_snapshot(&store.vault, &note, &clock, false, None)
                 .unwrap()
                 .is_none()
         );
         clock.advance_ms(5 * 60 * 1000);
         note.title = "versión 2".into();
-        maybe_snapshot(&store.vault, &note, &clock, true).unwrap();
+        maybe_snapshot(&store.vault, &note, &clock, true, None).unwrap();
         assert_eq!(list(&store.vault, &note.id).unwrap().len(), 2);
-        let restored = restore(&store.vault, &note.id, &versions[0].path, &clock).unwrap();
+        let restored = restore(&store.vault, &note.id, &versions[0].path, &clock, None).unwrap();
         assert_eq!(restored.title, "versión 1");
     }
 }

@@ -30,6 +30,7 @@ pub fn trash_note(
     note_path: &Path,
     note: &Note,
     clock: &dyn Clock,
+    cipher: Option<&crate::crypto::Cipher>,
 ) -> Result<PathBuf, FolioError> {
     let dir = vault
         .trash_dir()
@@ -43,10 +44,7 @@ pub fn trash_note(
         title: note.display_title(),
         deleted_at: clock.now_rfc3339(),
     };
-    write_atomic(
-        &dir.join("meta.json"),
-        serde_json::to_vec_pretty(&meta)?.as_slice(),
-    )?;
+    write_meta(&dir.join("meta.json"), &meta, cipher)?;
     let payload = dir.join(format!("{}.json", note.id));
     fs::rename(note_path, &payload).or_else(|_| {
         fs::copy(note_path, &payload)?;
@@ -56,7 +54,10 @@ pub fn trash_note(
     Ok(dir)
 }
 
-pub fn list(vault: &Vault) -> Result<Vec<TrashEntry>, FolioError> {
+pub fn list(
+    vault: &Vault,
+    cipher: Option<&crate::crypto::Cipher>,
+) -> Result<Vec<TrashEntry>, FolioError> {
     let mut entries = Vec::new();
     ensure_dir(&vault.trash_dir())?;
     for entry in fs::read_dir(vault.trash_dir())? {
@@ -68,7 +69,7 @@ pub fn list(vault: &Vault) -> Result<Vec<TrashEntry>, FolioError> {
         if !meta_path.exists() {
             continue;
         }
-        let meta: TrashMeta = serde_json::from_slice(&fs::read(&meta_path)?)?;
+        let meta = read_meta(&meta_path, cipher)?;
         entries.push(TrashEntry {
             dir: entry.path(),
             meta,
@@ -79,9 +80,13 @@ pub fn list(vault: &Vault) -> Result<Vec<TrashEntry>, FolioError> {
 }
 
 /// Restaura una entrada de papelera a su ruta original.
-pub fn restore(vault: &Vault, entry_dir: &Path) -> Result<PathBuf, FolioError> {
+pub fn restore(
+    vault: &Vault,
+    entry_dir: &Path,
+    cipher: Option<&crate::crypto::Cipher>,
+) -> Result<PathBuf, FolioError> {
     let meta_path = entry_dir.join("meta.json");
-    let meta: TrashMeta = serde_json::from_slice(&fs::read(&meta_path)?)?;
+    let meta = read_meta(&meta_path, cipher)?;
     if meta.kind == "book" {
         restore_book(vault, entry_dir, &meta)
     } else {
@@ -142,7 +147,12 @@ fn restore_book(vault: &Vault, entry_dir: &Path, meta: &TrashMeta) -> Result<Pat
     Ok(target)
 }
 
-pub fn trash_book(vault: &Vault, book: &Book, clock: &dyn Clock) -> Result<PathBuf, FolioError> {
+pub fn trash_book(
+    vault: &Vault,
+    book: &Book,
+    clock: &dyn Clock,
+    cipher: Option<&crate::crypto::Cipher>,
+) -> Result<PathBuf, FolioError> {
     let dir = vault.trash_dir().join(format!(
         "book-{}-{}",
         clock.now().as_millisecond(),
@@ -157,22 +167,24 @@ pub fn trash_book(vault: &Vault, book: &Book, clock: &dyn Clock) -> Result<PathB
         title: book.meta.title.clone(),
         deleted_at: clock.now_rfc3339(),
     };
-    write_atomic(
-        &dir.join("meta.json"),
-        serde_json::to_vec_pretty(&meta)?.as_slice(),
-    )?;
+    write_meta(&dir.join("meta.json"), &meta, cipher)?;
     fs::rename(&book.dir, dir.join("payload"))?;
     Ok(dir)
 }
 
 /// Purga entradas más antiguas que `days` (0 = desactivado).
-pub fn purge(vault: &Vault, days: u32, clock: &dyn Clock) -> Result<usize, FolioError> {
+pub fn purge(
+    vault: &Vault,
+    days: u32,
+    clock: &dyn Clock,
+    cipher: Option<&crate::crypto::Cipher>,
+) -> Result<usize, FolioError> {
     if days == 0 {
         return Ok(0);
     }
     let cutoff = clock.now().as_second() - i64::from(days) * 86_400;
     let mut removed = 0;
-    for entry in list(vault)? {
+    for entry in list(vault, cipher)? {
         let deleted: Result<jiff::Timestamp, _> = entry.meta.deleted_at.parse();
         if let Ok(deleted) = deleted
             && deleted.as_second() < cutoff
@@ -182,6 +194,28 @@ pub fn purge(vault: &Vault, days: u32, clock: &dyn Clock) -> Result<usize, Folio
         }
     }
     Ok(removed)
+}
+
+fn write_meta(
+    path: &Path,
+    meta: &TrashMeta,
+    cipher: Option<&crate::crypto::Cipher>,
+) -> Result<(), FolioError> {
+    let json = serde_json::to_vec_pretty(meta)?;
+    let bytes = match cipher {
+        Some(cipher) => cipher.encrypt(&json)?,
+        None => json,
+    };
+    write_atomic(path, &bytes)
+}
+
+fn read_meta(path: &Path, cipher: Option<&crate::crypto::Cipher>) -> Result<TrashMeta, FolioError> {
+    let bytes = fs::read(path)?;
+    let bytes = match cipher {
+        Some(cipher) => cipher.decrypt(&bytes)?,
+        None => bytes,
+    };
+    Ok(serde_json::from_slice(&bytes)?)
 }
 
 #[cfg(test)]
@@ -200,9 +234,9 @@ mod tests {
             .unwrap();
         let note = store.create_note(&book, "x", &clock).unwrap();
         let trashed = store.delete_note(&book, &note.id, &clock).unwrap();
-        assert_eq!(list(&store.vault).unwrap().len(), 1);
-        restore(&store.vault, &trashed).unwrap();
+        assert_eq!(list(&store.vault, None).unwrap().len(), 1);
+        restore(&store.vault, &trashed, None).unwrap();
         assert!(store.load_note(&book, &note.id).is_ok());
-        assert!(list(&store.vault).unwrap().is_empty());
+        assert!(list(&store.vault, None).unwrap().is_empty());
     }
 }

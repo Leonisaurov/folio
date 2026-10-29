@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fs;
+use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 
 use folio_config::{Config, FieldType, schema};
@@ -271,8 +272,22 @@ pub fn set_config_value(file: &Path, key: &str, raw: &str) -> Result<(), String>
     Ok(())
 }
 
+pub fn open_index(store: &Store) -> Result<Index, FolioError> {
+    if store.is_encrypted() {
+        let mut index = Index::open_in_memory()?;
+        index.rebuild(store)?;
+        Ok(index)
+    } else {
+        Index::open(&store.vault.index_path()).map_err(FolioError::from)
+    }
+}
+
 pub fn rebuild_index(store: &Store) -> Result<usize, FolioError> {
-    let mut index = Index::open(&store.vault.index_path())?;
+    let mut index = if store.is_encrypted() {
+        Index::open_in_memory()?
+    } else {
+        Index::open(&store.vault.index_path())?
+    };
     index.rebuild(store).map_err(FolioError::from)
 }
 
@@ -296,7 +311,7 @@ pub fn print_doctor(report: &doctor::DoctorReport, json: bool) -> Result<(), Fol
 }
 
 pub fn list_trash(store: &Store) -> Result<Vec<trash::TrashEntry>, FolioError> {
-    trash::list(&store.vault)
+    trash::list(&store.vault, store.crypto())
 }
 
 pub fn list_backups(store: &Store) -> Result<Vec<backup::BackupEntry>, FolioError> {
@@ -331,4 +346,64 @@ pub fn move_note(
 pub fn today_date(config: &Config, clock: &dyn Clock) -> Result<String, FolioError> {
     let daily = daily_config(config);
     Ok(logical_day(clock.now(), &daily.timezone, daily.day_start_hour)?.date_string())
+}
+
+/// Abre una bóveda, pidiendo contraseña o frase de recuperación si hace falta.
+pub fn open_store(
+    path: &Path,
+    password: Option<&str>,
+    recovery: Option<&str>,
+) -> Result<Store, FolioError> {
+    let mode = Store::encryption_mode(path)?;
+    if mode != "password" {
+        return Store::open(path);
+    }
+    if let Some(phrase) = recovery {
+        return Store::open_with_recovery(path, phrase);
+    }
+    let password = match password {
+        Some(password) => password.to_string(),
+        None => match std::env::var("FOLIO_PASSWORD") {
+            Ok(password) if !password.is_empty() => password,
+            _ => prompt_secret("Contraseña de la bóveda: ")?,
+        },
+    };
+    Store::open_with_password(path, &password)
+}
+
+pub fn prompt_secret(label: &str) -> Result<String, FolioError> {
+    if std::io::stdin().is_terminal() {
+        rpassword::prompt_password(label)
+            .map_err(|error| FolioError::Invalid(format!("no se pudo leer la contraseña: {error}")))
+    } else {
+        Err(FolioError::Locked(
+            "bóveda cifrada: usa --password o FOLIO_PASSWORD".into(),
+        ))
+    }
+}
+
+pub fn prompt_new_password() -> Result<String, FolioError> {
+    if let Ok(password) = std::env::var("FOLIO_PASSWORD")
+        && !password.is_empty()
+    {
+        return Ok(password);
+    }
+    if !std::io::stdin().is_terminal() {
+        return Err(FolioError::Invalid(
+            "bóveda cifrada: usa --password o FOLIO_PASSWORD".into(),
+        ));
+    }
+    let first = rpassword::prompt_password("Nueva contraseña: ")
+        .map_err(|error| FolioError::Invalid(error.to_string()))?;
+    let second = rpassword::prompt_password("Repite la contraseña: ")
+        .map_err(|error| FolioError::Invalid(error.to_string()))?;
+    if first != second {
+        return Err(FolioError::Invalid("las contraseñas no coinciden".into()));
+    }
+    if first.len() < 8 {
+        return Err(FolioError::Invalid(
+            "la contraseña debe tener al menos 8 caracteres".into(),
+        ));
+    }
+    Ok(first)
 }

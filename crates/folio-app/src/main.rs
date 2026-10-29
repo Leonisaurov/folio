@@ -9,7 +9,7 @@ use clap::{Parser, Subcommand};
 use folio_config::Config;
 use folio_core::{Clock, FolioError, SystemClock};
 use folio_plugins::runtime::PluginRuntime;
-use folio_store::{Index, Store};
+use folio_store::Store;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -25,6 +25,12 @@ struct Cli {
     /// Archivo de configuración global alternativo.
     #[arg(long, global = true, env = "FOLIO_CONFIG")]
     config: Option<PathBuf>,
+    /// Contraseña de la bóveda cifrada (mejor usa FOLIO_PASSWORD).
+    #[arg(long, global = true, env = "FOLIO_PASSWORD", hide_env_values = true)]
+    password: Option<String>,
+    /// Frase de recuperación de 24 palabras.
+    #[arg(long, global = true, hide_env_values = true)]
+    recovery: Option<String>,
     /// Cierra la app tras inicializar la ventana (benchmarks y CI).
     #[arg(long, hide = true)]
     quit_after_init: bool,
@@ -120,8 +126,15 @@ enum VaultCommand {
         path: PathBuf,
         #[arg(long, default_value = "Folio")]
         name: String,
+        /// Cifra la bóveda con contraseña (Argon2id + XChaCha20-Poly1305).
+        #[arg(long)]
+        encrypt: bool,
     },
     Info,
+    /// Cifra una bóveda existente (haz backup antes).
+    Encrypt,
+    /// Descifra una bóveda existente.
+    Decrypt,
 }
 
 #[derive(Debug, Subcommand)]
@@ -287,22 +300,49 @@ fn main() {
 fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(command) = cli.command {
         if let Command::Vault {
-            command: VaultCommand::Init { path, name },
+            command:
+                VaultCommand::Init {
+                    path,
+                    name,
+                    encrypt,
+                },
         } = &command
         {
             let clock = SystemClock;
-            let store = Store::init(path, name, &clock)?;
-            commands::remember_vault(path)?;
-            println!(
-                "Bóveda creada: {} ({})",
-                path.display(),
-                store.vault.meta.id
-            );
+            if *encrypt {
+                let password = cli
+                    .password
+                    .clone()
+                    .or_else(|| std::env::var("FOLIO_PASSWORD").ok())
+                    .map(Ok)
+                    .unwrap_or_else(commands::prompt_new_password)?;
+                let (store, phrase) = Store::init_encrypted(path, name, &clock, &password)?;
+                commands::remember_vault(path)?;
+                println!(
+                    "Bóveda cifrada creada: {} ({})",
+                    path.display(),
+                    store.vault.meta.id
+                );
+                eprintln!("FRASE DE RECUPERACIÓN (guárdala):");
+                eprintln!("{phrase}");
+            } else {
+                let store = Store::init(path, name, &clock)?;
+                commands::remember_vault(path)?;
+                println!(
+                    "Bóveda creada: {} ({})",
+                    path.display(),
+                    store.vault.meta.id
+                );
+            }
             return Ok(());
         }
         let vault_path = commands::resolve_vault(cli.vault.as_deref());
         let store = match &vault_path {
-            Some(path) => Some(Store::open(path)?),
+            Some(path) => Some(commands::open_store(
+                path,
+                cli.password.as_deref(),
+                cli.recovery.as_deref(),
+            )?),
             None => None,
         };
         dispatch(
@@ -310,6 +350,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             store.as_ref(),
             cli.vault.as_deref(),
             cli.config.as_deref(),
+            cli.password.as_deref(),
         )?;
         return Ok(());
     }
@@ -320,7 +361,7 @@ fn run(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(path) = &vault {
         commands::remember_vault(path)?;
     }
-    let exit = folio_ui::run(vault, config, cli.quit_after_init);
+    let exit = folio_ui::run(vault, config, cli.quit_after_init, cli.password.clone());
     std::process::exit(i32::from(exit.get()));
 }
 
@@ -329,6 +370,7 @@ fn dispatch(
     store: Option<&Store>,
     vault_path: Option<&Path>,
     config_path: Option<&Path>,
+    password: Option<&str>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let clock = SystemClock;
     let require_store = || -> Result<&Store, FolioError> {
@@ -338,15 +380,67 @@ fn dispatch(
     };
     match command {
         Command::Vault {
-            command: VaultCommand::Init { path, name },
+            command:
+                VaultCommand::Init {
+                    path,
+                    name,
+                    encrypt,
+                },
         } => {
-            let store = Store::init(&path, &name, &clock)?;
-            commands::remember_vault(&path)?;
-            println!(
-                "Bóveda creada: {} ({})",
-                path.display(),
-                store.vault.meta.id
-            );
+            if encrypt {
+                let password = password
+                    .map(str::to_string)
+                    .or_else(|| std::env::var("FOLIO_PASSWORD").ok())
+                    .map(Ok)
+                    .unwrap_or_else(commands::prompt_new_password)?;
+                let (store, phrase) = Store::init_encrypted(&path, &name, &clock, &password)?;
+                commands::remember_vault(&path)?;
+                println!(
+                    "Bóveda cifrada creada: {} ({})",
+                    path.display(),
+                    store.vault.meta.id
+                );
+                eprintln!("FRASE DE RECUPERACIÓN (guárdala):");
+                eprintln!("{phrase}");
+            } else {
+                let store = Store::init(&path, &name, &clock)?;
+                commands::remember_vault(&path)?;
+                println!(
+                    "Bóveda creada: {} ({})",
+                    path.display(),
+                    store.vault.meta.id
+                );
+            }
+        }
+        Command::Vault {
+            command: VaultCommand::Encrypt,
+        } => {
+            let mut store = require_store()?.clone();
+            if store.is_encrypted() {
+                return Err("la bóveda ya está cifrada".into());
+            }
+            let password = password
+                .map(str::to_string)
+                .or_else(|| std::env::var("FOLIO_PASSWORD").ok())
+                .map(Ok)
+                .unwrap_or_else(commands::prompt_new_password)?;
+            let phrase = store.encrypt_in_place(&password)?;
+            commands::remember_vault(store.root())?;
+            println!("Bóveda cifrada: {}", store.root().display());
+            eprintln!("FRASE DE RECUPERACIÓN (guárdala):");
+            eprintln!("{phrase}");
+        }
+        Command::Vault {
+            command: VaultCommand::Decrypt,
+        } => {
+            let mut store = require_store()?.clone();
+            let password = password
+                .map(str::to_string)
+                .or_else(|| std::env::var("FOLIO_PASSWORD").ok())
+                .map(Ok)
+                .unwrap_or_else(|| commands::prompt_secret("Contraseña de la bóveda: "))?;
+            store.decrypt_in_place(&password)?;
+            println!("Bóveda descifrada: {}", store.root().display());
         }
         Command::Vault {
             command: VaultCommand::Info,
@@ -429,7 +523,12 @@ fn dispatch(
                     if !yes {
                         return Err("confirma con --yes".into());
                     }
-                    let trashed = folio_store::trash::trash_book(&store.vault, &book, &clock)?;
+                    let trashed = folio_store::trash::trash_book(
+                        &store.vault,
+                        &book,
+                        &clock,
+                        store.crypto(),
+                    )?;
                     println!("{}", trashed.display());
                 }
             }
@@ -513,7 +612,7 @@ fn dispatch(
                     println!("{count} notas indexadas");
                 }
                 IndexCommand::Stats => {
-                    let index = Index::open(&store.vault.index_path())?;
+                    let index = commands::open_index(store)?;
                     let stats = index.stats()?;
                     println!("libros: {}", stats.books);
                     println!("notas: {}", stats.notes);
@@ -524,7 +623,7 @@ fn dispatch(
         }
         Command::Search { query, limit, json } => {
             let store = require_store()?;
-            let index = Index::open(&store.vault.index_path())?;
+            let index = commands::open_index(store)?;
             let hits = index.search(&query, limit)?;
             if json {
                 println!("{}", serde_json::to_string_pretty(&hits)?);
@@ -760,11 +859,13 @@ fn dispatch(
                     }
                 }
                 TrashCommand::Restore { path } => {
-                    let restored = folio_store::trash::restore(&store.vault, &path)?;
+                    let restored =
+                        folio_store::trash::restore(&store.vault, &path, store.crypto())?;
                     println!("{}", restored.display());
                 }
                 TrashCommand::Purge { days } => {
-                    let count = folio_store::trash::purge(&store.vault, days, &clock)?;
+                    let count =
+                        folio_store::trash::purge(&store.vault, days, &clock, store.crypto())?;
                     println!("{count} entradas purgadas");
                 }
             }

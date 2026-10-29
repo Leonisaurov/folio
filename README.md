@@ -29,13 +29,15 @@ plugins aislados con UI declarativa.
   y cinco ejemplos (`progress`, `chart`, `diagram`, `stats`, `quickbar`).
 - **Vista web viva** opcional con WebKitGTK 6.0 (`--features webkit`): sesión
   efímera, sin cookies, sin descargas, permisos denegados y descarga al salir.
+- **Cifrado opcional** de bóveda con Argon2id + XChaCha20-Poly1305, clave
+  envuelta, frase de recuperación de 24 palabras, índice efímero y auto-bloqueo.
 - **Datos**: exportación Markdown/HTML sin scripts, importación Markdown saneada.
 - **Configuración**: un esquema único para TOML, CLI y GUI; precedencia y recarga.
 
-Limitaciones del MVP: el runtime WASM de terceros, PDF, cifrado, `.deb` y la
-auditoría completa de accesibilidad son 1.0 (ver
-[docs/12](docs/12-backlog-post-1.0.md), ADR-023 y ADR-027). La vista web viva ya
-está disponible como feature opcional.
+Limitaciones del MVP: el runtime WASM de terceros, PDF, `.deb` y la auditoría
+completa de accesibilidad son 1.0 (ver
+[docs/12](docs/12-backlog-post-1.0.md), ADR-023, ADR-027 y ADR-028). La vista web
+viva y el cifrado de bóveda ya están disponibles.
 
 ## Compilar y ejecutar
 
@@ -49,6 +51,11 @@ rustup component add rustfmt clippy
 ```
 
 ```bash
+# Bóveda cifrada (pide contraseña y muestra la frase de recuperación):
+./target/release/folio vault init ~/Notas --encrypt
+# o cifrar una existente (haz backup antes):
+./target/release/folio --vault ~/Notas vault encrypt
+
 cargo build --release
 # Vista web viva (requiere webkitgtk-6.0 / libwebkitgtk-6.0-dev):
 cargo build --release --features webkit
@@ -69,6 +76,7 @@ Sin argumentos abre la GUI. `folio --vault <ruta>` abre una bóveda concreta.
 ./scripts/perf.sh                    # 10k notas, búsqueda, layout y arranque
 ./scripts/soak.sh --quick 30         # soak corto; sin --quick son 2 h
 ./scripts/webkit.sh                  # aislamiento de la vista web viva
+cargo test -p folio-store --test encryption  # strings, temporales, recuperación
 ./bench/startup.sh                   # actualiza bench/baseline.json
 ```
 

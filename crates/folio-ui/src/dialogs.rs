@@ -699,7 +699,7 @@ pub fn open_trash(app: &Rc<App>) {
     box_.append(&scroller);
     let entries = {
         let state = app.state.borrow();
-        folio_store::trash::list(&state.store.vault).unwrap_or_default()
+        folio_store::trash::list(&state.store.vault, state.store.crypto()).unwrap_or_default()
     };
     if entries.is_empty() {
         list.append(&gtk::Label::new(Some("La papelera está vacía.")));
@@ -733,7 +733,8 @@ pub fn open_trash(app: &Rc<App>) {
     let app_purge = app.clone();
     purge.connect_clicked(move |_| {
         let state = app_purge.state.borrow();
-        match folio_store::trash::purge(&state.store.vault, 30, &state.clock) {
+        match folio_store::trash::purge(&state.store.vault, 30, &state.clock, state.store.crypto())
+        {
             Ok(count) => {
                 drop(state);
                 app_purge.toast(&format!("{count} entradas purgadas"));
@@ -747,4 +748,62 @@ pub fn open_trash(app: &Rc<App>) {
     box_.append(&purge);
     window.set_child(Some(&box_));
     window.present();
+}
+
+pub fn prompt_unlock(app: &Rc<App>) {
+    let window = gtk::Window::builder()
+        .title("Desbloquear bóveda")
+        .default_width(460)
+        .modal(true)
+        .transient_for(&app.window)
+        .build();
+    let box_ = gtk::Box::new(gtk::Orientation::Vertical, 10);
+    box_.set_margin_top(18);
+    box_.set_margin_bottom(18);
+    box_.set_margin_start(18);
+    box_.set_margin_end(18);
+    let title = gtk::Label::new(Some("Bóveda bloqueada"));
+    title.add_css_class("empty-title");
+    box_.append(&title);
+    let hint = gtk::Label::new(Some(
+        "Introduce la contraseña o la frase de recuperación de 24 palabras.",
+    ));
+    hint.add_css_class("caption");
+    hint.set_wrap(true);
+    box_.append(&hint);
+    let password = gtk::PasswordEntry::new();
+    password.set_placeholder_text(Some("Contraseña"));
+    password.set_show_peek_icon(true);
+    password.set_activates_default(true);
+    box_.append(&password);
+    let recovery = gtk::Entry::new();
+    recovery.set_placeholder_text(Some("Frase de recuperación (opcional)"));
+    box_.append(&recovery);
+    let error = gtk::Label::new(None);
+    error.add_css_class("missing");
+    error.set_wrap(true);
+    box_.append(&error);
+    let unlock = gtk::Button::with_label("Desbloquear");
+    unlock.add_css_class("suggested-action");
+    box_.append(&unlock);
+    window.set_child(Some(&box_));
+    window.present();
+    password.grab_focus();
+
+    let app = app.clone();
+    let window_for_unlock = window.clone();
+    let password_entry = password.clone();
+    let recovery_entry = recovery.clone();
+    let error_label = error.clone();
+    unlock.connect_clicked(move |_| {
+        let result = if recovery_entry.text().trim().is_empty() {
+            app.unlock_vault(&password_entry.text())
+        } else {
+            app.unlock_vault_recovery(&recovery_entry.text())
+        };
+        match result {
+            Ok(()) => window_for_unlock.close(),
+            Err(error) => error_label.set_text(&error.to_string()),
+        }
+    });
 }

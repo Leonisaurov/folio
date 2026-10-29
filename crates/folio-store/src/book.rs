@@ -105,7 +105,26 @@ impl Book {
         Ok(())
     }
 
+    pub fn create_on_disk_with(
+        &mut self,
+        vault: &Vault,
+        cipher: Option<&crate::crypto::Cipher>,
+    ) -> Result<(), FolioError> {
+        self.dir = vault.books_dir().join(&self.folder);
+        ensure_dir(&self.dir.join("notes"))?;
+        self.save_with(cipher)?;
+        Ok(())
+    }
+
     pub fn load(dir: &Path, folder: String) -> Result<Self, FolioError> {
+        Self::load_with(dir, folder, None)
+    }
+
+    pub fn load_with(
+        dir: &Path,
+        folder: String,
+        cipher: Option<&crate::crypto::Cipher>,
+    ) -> Result<Self, FolioError> {
         let path = dir.join("book.toml");
         let bytes = fs::read(&path).map_err(|error| {
             if error.kind() == std::io::ErrorKind::NotFound {
@@ -114,6 +133,18 @@ impl Book {
                 error.into()
             }
         })?;
+        let bytes = match cipher {
+            Some(cipher) => {
+                if !crate::crypto::is_encrypted(&bytes) {
+                    return Err(FolioError::Corrupt(format!(
+                        "book.toml sin cifrar en bóveda cifrada: {}",
+                        path.display()
+                    )));
+                }
+                cipher.decrypt(&bytes)?
+            }
+            None => bytes,
+        };
         let text = String::from_utf8_lossy(&bytes);
         let meta: BookMeta = toml::from_str(&text)
             .map_err(|error| FolioError::Toml(format!("{}: {error}", path.display())))?;
@@ -130,10 +161,18 @@ impl Book {
     }
 
     pub fn save(&self) -> Result<(), FolioError> {
+        self.save_with(None)
+    }
+
+    pub fn save_with(&self, cipher: Option<&crate::crypto::Cipher>) -> Result<(), FolioError> {
         self.meta.validate()?;
         let text = toml::to_string_pretty(&self.meta)
             .map_err(|error| FolioError::Toml(error.to_string()))?;
-        write_atomic(&self.dir.join("book.toml"), text.as_bytes())
+        let bytes = match cipher {
+            Some(cipher) => cipher.encrypt(text.as_bytes())?,
+            None => text.into_bytes(),
+        };
+        write_atomic(&self.dir.join("book.toml"), &bytes)
     }
 
     pub fn touch(&mut self, clock: &dyn Clock) {

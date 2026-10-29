@@ -15,6 +15,9 @@ log "Rutas de assets y validación de URL"
 cargo test -q -p folio-store assets
 cargo test -q -p folio-core bad_url_and_mailto
 
+log "Cifrado: strings, temporales, assets y recuperación"
+cargo test -q -p folio-store --test encryption
+
 log "Exportación sin scripts"
 cargo test -q -p folio-render html_escapes_text_and_links
 cargo test -q -p folio-render html_is_self_contained_and_has_no_scripts

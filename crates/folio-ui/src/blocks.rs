@@ -533,7 +533,7 @@ fn render_table(app: &Rc<App>, block: &Block, table: &TableContent, editable: bo
 
 fn render_image(app: &Rc<App>, image: &folio_core::model::ImageContent) -> gtk::Widget {
     let box_ = gtk::Box::new(gtk::Orientation::Vertical, 4);
-    match folio_store::assets::resolve(&app.state.borrow().store.vault, &image.asset) {
+    match app.state.borrow().store.asset_display_path(&image.asset) {
         Ok(Some(path)) => {
             let picture = gtk::Picture::for_filename(path);
             picture.set_can_shrink(true);
@@ -571,8 +571,14 @@ fn render_file(app: &Rc<App>, file: &folio_core::model::FileContent) -> gtk::Wid
     let asset = file.asset.clone();
     let name = file.name.clone();
     open.connect_clicked(move |_| {
-        let vault = app.state.borrow().store.vault.clone();
-        if let Ok(Some(path)) = folio_store::assets::resolve(&vault, &asset) {
+        let path = app
+            .state
+            .borrow()
+            .store
+            .asset_display_path(&asset)
+            .ok()
+            .flatten();
+        if let Some(path) = path {
             let dialog = gtk::AlertDialog::builder()
                 .message(format!("¿Abrir «{name}» con la aplicación del sistema?"))
                 .buttons(["Cancelar", "Abrir"])
@@ -618,7 +624,7 @@ fn render_media(app: &Rc<App>, asset: &str, title: &str, video: bool) -> gtk::Wi
     )));
     label.set_xalign(0.0);
     box_.append(&label);
-    match folio_store::assets::resolve(&app.state.borrow().store.vault, asset) {
+    match app.state.borrow().store.asset_display_path(asset) {
         Ok(Some(path)) => {
             let media = gtk::Video::for_filename(Some(&path));
             media.set_autoplay(false);

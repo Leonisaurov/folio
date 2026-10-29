@@ -30,6 +30,7 @@ thiserror.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 jiff.workspace = true
+rpassword = "7"
 toml.workspace = true
 
 [dev-dependencies]

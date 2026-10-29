@@ -319,7 +319,7 @@ impl Index {
             for book in store.list_books()? {
                 self.index_book(&book)?;
                 for (key, path) in note_files(&book)? {
-                    let note = crate::repository::load_note_file(&path)?;
+                    let note = store.load_note_at(&path)?;
                     self.index_note(&book, &note, &path, &key)?;
                     count += 1;
                 }

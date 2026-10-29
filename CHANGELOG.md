@@ -4,6 +4,16 @@ Todas las fechas en formato ISO 8601. Este proyecto sigue [SemVer](https://semve
 
 ## [1.0.0] — en curso
 
+### Semana 16 — cifrado de bóveda
+
+- Argon2id + XChaCha20-Poly1305 con VK envuelta en `.folio/keyring.json`.
+- Cifrado de libros, notas, assets, versiones, papelera y recuperación.
+- Frase de recuperación BIP39 de 24 palabras verificada por hash.
+- Índice efímero en memoria en bóvedas cifradas.
+- Auto-bloqueo por inactividad y bloqueo manual en GUI; desbloqueo con contraseña
+  o frase; CLI con `--password`/`FOLIO_PASSWORD`.
+- `vault encrypt`/`vault decrypt`, pruebas de `strings`, temporales, assets y TOML.
+
 ### Semana 15 — vista web viva
 
 - WebKitGTK 6.0 tras feature flag `webkit`.

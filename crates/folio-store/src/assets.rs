@@ -46,17 +46,31 @@ fn relative_path(hash: &str, ext: &str) -> PathBuf {
 }
 
 /// Importa un archivo, deduplicando por BLAKE3.
-pub fn import_file(vault: &Vault, source: &Path) -> Result<String, FolioError> {
+pub fn import_file(
+    vault: &Vault,
+    source: &Path,
+    cipher: Option<&crate::crypto::Cipher>,
+) -> Result<String, FolioError> {
     let hash = hash_file(source)?;
     let ext = sanitized_extension(source);
     let dest = vault.assets_dir().join(relative_path(&hash, &ext));
     if !dest.exists() {
-        copy_atomic(source, &dest)?;
+        if let Some(cipher) = cipher {
+            let plain = fs::read(source)?;
+            write_atomic(&dest, &cipher.encrypt(&plain)?)?;
+        } else {
+            copy_atomic(source, &dest)?;
+        }
     }
     Ok(hash)
 }
 
-pub fn import_bytes(vault: &Vault, bytes: &[u8], extension: &str) -> Result<String, FolioError> {
+pub fn import_bytes(
+    vault: &Vault,
+    bytes: &[u8],
+    extension: &str,
+    cipher: Option<&crate::crypto::Cipher>,
+) -> Result<String, FolioError> {
     let hash = hash_bytes(bytes);
     let ext: String = extension
         .chars()
@@ -67,7 +81,10 @@ pub fn import_bytes(vault: &Vault, bytes: &[u8], extension: &str) -> Result<Stri
     let ext = if ext.is_empty() { "bin".into() } else { ext };
     let dest = vault.assets_dir().join(relative_path(&hash, &ext));
     if !dest.exists() {
-        write_atomic(&dest, bytes)?;
+        match cipher {
+            Some(cipher) => write_atomic(&dest, &cipher.encrypt(bytes)?)?,
+            None => write_atomic(&dest, bytes)?,
+        }
     }
     Ok(hash)
 }
@@ -93,10 +110,18 @@ pub fn resolve(vault: &Vault, hash: &str) -> Result<Option<PathBuf>, FolioError>
     Ok(None)
 }
 
-pub fn read_bytes(vault: &Vault, hash: &str) -> Result<Vec<u8>, FolioError> {
+pub fn read_bytes(
+    vault: &Vault,
+    hash: &str,
+    cipher: Option<&crate::crypto::Cipher>,
+) -> Result<Vec<u8>, FolioError> {
     let path =
         resolve(vault, hash)?.ok_or_else(|| FolioError::NotFound(format!("asset {hash}")))?;
-    Ok(fs::read(path)?)
+    let bytes = fs::read(path)?;
+    match cipher {
+        Some(cipher) => cipher.decrypt(&bytes),
+        None => Ok(bytes),
+    }
 }
 
 pub fn list_assets(vault: &Vault) -> Result<Vec<(String, PathBuf)>, FolioError> {
@@ -137,11 +162,11 @@ mod tests {
     fn deduplicates_assets() {
         let dir = tempfile::tempdir().unwrap();
         let vault = Vault::init(dir.path(), "v", &SystemClock).unwrap();
-        let a = import_bytes(&vault, b"mismo contenido", "txt").unwrap();
-        let b = import_bytes(&vault, b"mismo contenido", "txt").unwrap();
+        let a = import_bytes(&vault, b"mismo contenido", "txt", None).unwrap();
+        let b = import_bytes(&vault, b"mismo contenido", "txt", None).unwrap();
         assert_eq!(a, b);
         assert_eq!(list_assets(&vault).unwrap().len(), 1);
-        assert_eq!(read_bytes(&vault, &a).unwrap(), b"mismo contenido");
+        assert_eq!(read_bytes(&vault, &a, None).unwrap(), b"mismo contenido");
         assert_eq!(
             resolve(&vault, &a).unwrap().unwrap().extension().unwrap(),
             "txt"

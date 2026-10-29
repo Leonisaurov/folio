@@ -936,7 +936,7 @@ Fecha de cierre del MVP: **2026-10-29**. Estado verificado con
 | Semana | Foco | Estado | Evidencia |
 |---|---|---|---|
 | 15 | Vista web viva aislada | Implementado con feature flag | `cargo test -p folio-ui --features webkit --test webkit`; `scripts/webkit.sh` |
-| 16 | Cifrado de bóveda | Pendiente | — |
+| 16 | Cifrado de bóveda | Implementado | `crates/folio-store/tests/encryption.rs`; `folio vault init --encrypt`; bloqueo/desbloqueo GUI |
 | 17 | PDF y plugins 4–5 | Pendiente (plugins ya presentes) | — |
 | 18 | Accesibilidad y `.deb` | Pendiente | — |
 | 19 | Cierre de beta | Pendiente (requiere uso real) | — |
@@ -962,6 +962,12 @@ formato de datos:
 3. **Metadatos web**: la tarjeta web funciona con metadatos cacheados y fallback
    offline; la descarga automática de metadatos queda para 1.0. La vista viva ya
    está implementada como feature opcional (ADR-027).
+4. **Cifrado**: las bóvedas nuevas usan carpetas de libro opacas; al cifrar una
+   bóveda existente se conservan los nombres de carpeta para no romper enlaces
+   (la fecha puede deducirse del nombre). El índice no se persiste: se reconstruye
+   en memoria tras desbloquear. Los backups antiguos en claro no se convierten
+   automáticamente; hay que cifrarlos o eliminarlos. `logind` y la migración
+   completa quedan para el cierre de 1.0.
 4. **Accesibilidad**: hay navegación por teclado, nombres de acción y estados
    vacíos; la auditoría con lector de pantalla y escala 200 % es 1.0.
 5. **Flatpak/AUR**: los manifiestos y metadatos están; falta validar el build

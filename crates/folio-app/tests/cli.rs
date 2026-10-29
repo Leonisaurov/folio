@@ -155,3 +155,100 @@ fn cli_daily_book_and_backfill() {
     assert!(books.contains("2026-10-20"));
     assert!(books.contains("2026-10-29"));
 }
+
+#[test]
+fn cli_encrypted_vault_requires_password_and_leaks_no_plaintext() {
+    let dir = tempfile::tempdir().unwrap();
+    let vault = dir.path().join("vault");
+    let password = "contraseña-larga";
+    run(&[
+        "vault",
+        "init",
+        vault.to_str().unwrap(),
+        "--encrypt",
+        "--password",
+        password,
+    ]);
+    let book = run(&[
+        "--vault",
+        vault.to_str().unwrap(),
+        "--password",
+        password,
+        "book",
+        "create",
+        "--title",
+        "Proyecto secreto",
+    ]);
+    let book_id = book.trim();
+    let note = run(&[
+        "--vault",
+        vault.to_str().unwrap(),
+        "--password",
+        password,
+        "note",
+        "create",
+        "--book",
+        book_id,
+        "--title",
+        "Nota secreta",
+        "--text",
+        "contenido confidencial único",
+    ]);
+    let note_id = note.trim();
+    let search = run(&[
+        "--vault",
+        vault.to_str().unwrap(),
+        "--password",
+        password,
+        "search",
+        "confidencial",
+        "--json",
+    ]);
+    assert!(search.contains(note_id));
+
+    let wrong = folio()
+        .args([
+            "--vault",
+            vault.to_str().unwrap(),
+            "--password",
+            "incorrecta",
+            "note",
+            "list",
+            "--book",
+            book_id,
+        ])
+        .output()
+        .unwrap();
+    assert!(!wrong.status.success());
+
+    // Ningún archivo de datos contiene el texto en claro. El índice en
+    // bóvedas cifradas es solo en memoria.
+    fn walk(dir: &Path, out: &mut Vec<std::path::PathBuf>) {
+        for entry in std::fs::read_dir(dir).unwrap() {
+            let entry = entry.unwrap();
+            if entry.file_type().unwrap().is_dir() {
+                walk(&entry.path(), out);
+            } else {
+                out.push(entry.path());
+            }
+        }
+    }
+    let mut files = Vec::new();
+    walk(&vault, &mut files);
+    for path in files {
+        let name = path.file_name().unwrap().to_string_lossy();
+        if name == "vault.toml" || name == "keyring.json" {
+            continue;
+        }
+        let bytes = std::fs::read(&path).unwrap();
+        let text = String::from_utf8_lossy(&bytes);
+        assert!(
+            !text.contains("contenido confidencial"),
+            "{}",
+            path.display()
+        );
+        assert!(!text.contains("Nota secreta"), "{}", path.display());
+        assert!(!text.contains("Proyecto secreto"), "{}", path.display());
+    }
+    assert!(!vault.join(".folio/index.sqlite").exists());
+}

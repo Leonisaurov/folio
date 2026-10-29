@@ -32,14 +32,22 @@ pub struct AppState {
     pub runtime: BuiltinRuntime,
     pub config_error: Option<String>,
     pub last_message: Option<String>,
+    pub locked: bool,
     pub clock: SystemClock,
 }
 
 impl AppState {
     pub fn new(store: Store, config: Config) -> Result<Self, FolioError> {
-        let mut index = Index::open(&store.vault.index_path())?;
-        if index.stats().map(|stats| stats.notes).unwrap_or(0) == 0 {
-            let _ = index.rebuild(&store);
+        if !store.is_unlocked() {
+            return Err(FolioError::Locked(store.root().display().to_string()));
+        }
+        let mut index = if store.is_encrypted() {
+            Index::open_in_memory()?
+        } else {
+            Index::open(&store.vault.index_path())?
+        };
+        if store.is_encrypted() || index.stats().map(|stats| stats.notes).unwrap_or(0) == 0 {
+            index.rebuild(&store)?;
         }
         let registry = Registry::load(store.root())
             .map_err(|error| FolioError::Invalid(format!("plugins: {error}")))?;
@@ -65,6 +73,7 @@ impl AppState {
             runtime: BuiltinRuntime::default(),
             config_error: None,
             last_message: None,
+            locked: false,
             clock: SystemClock,
         };
         if daily.enabled {
@@ -88,6 +97,9 @@ impl AppState {
     }
 
     pub fn books(&self) -> Result<Vec<Book>, FolioError> {
+        if self.locked {
+            return Ok(Vec::new());
+        }
         self.store.list_books()
     }
 
@@ -97,6 +109,9 @@ impl AppState {
     }
 
     pub fn notes(&self) -> Result<Vec<folio_store::NoteSummary>, FolioError> {
+        if self.locked {
+            return Ok(Vec::new());
+        }
         if !self.search.is_empty() {
             let hits = self.index.search(&self.search, 100)?;
             let mut notes = Vec::new();
@@ -117,9 +132,47 @@ impl AppState {
     }
 
     pub fn flush(&mut self) -> Result<(), FolioError> {
-        if self.dirty {
+        if self.dirty && !self.locked {
             self.save()?;
         }
+        Ok(())
+    }
+
+    /// Bloquea la bóveda: descarta la clave de memoria y los buffers visibles.
+    pub fn lock(&mut self) {
+        if !self.store.is_encrypted() {
+            return;
+        }
+        self.flush().ok();
+        self.store.lock();
+        self.current_note = None;
+        self.dirty = false;
+        self.search.clear();
+        self.undo.clear();
+        self.locked = true;
+    }
+
+    /// Desbloquea con contraseña o frase de recuperación y reconstruye el índice
+    /// efímero (nunca se escribe un índice en claro).
+    pub fn unlock(&mut self, password: &str) -> Result<(), FolioError> {
+        self.store.unlock(password)?;
+        self.unlock_after_key()
+    }
+
+    pub fn unlock_recovery(&mut self, phrase: &str) -> Result<(), FolioError> {
+        self.store.unlock_recovery(phrase)?;
+        self.unlock_after_key()
+    }
+
+    fn unlock_after_key(&mut self) -> Result<(), FolioError> {
+        self.locked = false;
+        let mut index = if self.store.is_encrypted() {
+            Index::open_in_memory()?
+        } else {
+            Index::open(&self.store.vault.index_path())?
+        };
+        index.rebuild(&self.store)?;
+        self.index = index;
         Ok(())
     }
 
@@ -138,7 +191,8 @@ impl AppState {
         self.flush()?;
         let (book, mut note) = self.store.find_note(id)?;
         self.current_book = Some(book.meta.id);
-        if let Ok(Some(recovery)) = folio_store::doctor::read_recovery(&self.store.vault, id)
+        if let Ok(Some(recovery)) =
+            folio_store::doctor::read_recovery(&self.store.vault, id, self.store.crypto())
             && recovery.updated_at > note.updated_at
         {
             note = recovery;
@@ -151,6 +205,9 @@ impl AppState {
     }
 
     pub fn save(&mut self) -> Result<(), FolioError> {
+        if self.locked {
+            return Err(FolioError::Locked("la bóveda está bloqueada".into()));
+        }
         let Some(book) = self.current_book() else {
             return Ok(());
         };
@@ -227,7 +284,12 @@ impl AppState {
     pub fn delete_book(&mut self, id: &str) -> Result<PathBuf, FolioError> {
         self.flush()?;
         let book = self.store.book(id)?;
-        let path = folio_store::trash::trash_book(&self.store.vault, &book, &self.clock)?;
+        let path = folio_store::trash::trash_book(
+            &self.store.vault,
+            &book,
+            &self.clock,
+            self.store.crypto(),
+        )?;
         if self.current_book.as_deref() == Some(id) {
             self.current_book = None;
             self.current_note = None;
@@ -466,7 +528,7 @@ impl AppState {
     }
 
     pub fn restore_trash(&mut self, path: &Path) -> Result<PathBuf, FolioError> {
-        folio_store::trash::restore(&self.store.vault, path)
+        folio_store::trash::restore(&self.store.vault, path, self.store.crypto())
     }
 
     pub fn create_backup(&mut self) -> Result<PathBuf, FolioError> {

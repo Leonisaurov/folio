@@ -5,6 +5,7 @@ pub mod assets;
 pub mod atomic;
 pub mod backup;
 pub mod book;
+pub mod crypto;
 pub mod doctor;
 pub mod index;
 pub mod lock;

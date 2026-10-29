@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use folio_core::ordering::{FIRST_KEY, key_after, key_between, validate_sequence};
 use folio_core::{Clock, FolioError, Note, ids};
@@ -36,6 +37,7 @@ pub enum MovePosition<'a> {
 #[derive(Debug, Clone)]
 pub struct Store {
     pub vault: Vault,
+    crypto: Option<Arc<crate::crypto::Cipher>>,
 }
 
 pub struct BookScan {
@@ -47,13 +49,281 @@ impl Store {
     pub fn init(root: &Path, name: &str, clock: &dyn Clock) -> Result<Self, FolioError> {
         Ok(Self {
             vault: Vault::init(root, name, clock)?,
+            crypto: None,
         })
+    }
+
+    /// Crea una bóveda cifrada con contraseña y devuelve la frase de recuperación.
+    pub fn init_encrypted(
+        root: &Path,
+        name: &str,
+        clock: &dyn Clock,
+        password: &str,
+    ) -> Result<(Self, String), FolioError> {
+        let vault = Vault::init(root, name, clock)?;
+        let (cipher, keyring, phrase) =
+            crate::crypto::Cipher::create(password, &crate::crypto::KdfParams::default())?;
+        crate::crypto::save_keyring(root, &keyring)?;
+        let mut vault = vault;
+        vault.meta.encryption.mode = "password".into();
+        vault.save_meta()?;
+        Ok((
+            Self {
+                vault,
+                crypto: Some(Arc::new(cipher)),
+            },
+            phrase,
+        ))
     }
 
     pub fn open(root: &Path) -> Result<Self, FolioError> {
         Ok(Self {
             vault: Vault::open(root)?,
+            crypto: None,
         })
+    }
+
+    /// Devuelve `none` o `password` sin necesidad de desbloquear.
+    pub fn encryption_mode(root: &Path) -> Result<String, FolioError> {
+        Ok(Vault::open(root)?.meta.encryption.mode)
+    }
+
+    /// Convierte una bóveda en claro en cifrada. El llamador debe hacer backup.
+    pub fn encrypt_in_place(&mut self, password: &str) -> Result<String, FolioError> {
+        if self.is_encrypted() {
+            return Err(FolioError::Conflict("la bóveda ya está cifrada".into()));
+        }
+        let (cipher, keyring, phrase) =
+            crate::crypto::Cipher::create(password, &crate::crypto::KdfParams::default())?;
+        let mut paths = Vec::new();
+        for root in [
+            self.vault.books_dir(),
+            self.vault.assets_dir(),
+            self.vault.folio_dir().join("versions"),
+            self.vault.folio_dir().join("trash"),
+            self.vault.folio_dir().join("recovery"),
+        ] {
+            if !root.exists() {
+                continue;
+            }
+            for path in crate::atomic::walk_files(&root)? {
+                paths.push(path);
+            }
+        }
+        // El índice en claro no debe sobrevivir a la conversión.
+        let index = self.vault.index_path();
+        if index.exists() {
+            let _ = fs::remove_file(&index);
+            let _ = fs::remove_file(index.with_extension("sqlite-wal"));
+            let _ = fs::remove_file(index.with_extension("sqlite-shm"));
+        }
+        // Primero los datos, después el modo: si algo falla, el keyring no se
+        // publica y la bóveda sigue siendo legible como bóveda en claro.
+        for path in &paths {
+            let plain = fs::read(path)?;
+            write_atomic(path, &cipher.encrypt(&plain)?)?;
+        }
+        crate::crypto::save_keyring(self.root(), &keyring)?;
+        self.vault.meta.encryption.mode = "password".into();
+        self.vault.save_meta()?;
+        self.crypto = Some(Arc::new(cipher));
+        Ok(phrase)
+    }
+
+    /// Deshace el cifrado dejando los archivos en claro (útil para migrar o
+    /// recuperar con herramientas externas). Requiere la contraseña.
+    pub fn decrypt_in_place(&mut self, password: &str) -> Result<(), FolioError> {
+        if !self.is_encrypted() {
+            return Err(FolioError::Conflict("la bóveda no está cifrada".into()));
+        }
+        let cipher = match &self.crypto {
+            Some(cipher) => cipher.clone(),
+            None => {
+                let keyring = crate::crypto::load_keyring(self.root())?;
+                Arc::new(crate::crypto::Cipher::unlock(password, &keyring)?)
+            }
+        };
+        let mut paths = Vec::new();
+        for root in [
+            self.vault.books_dir(),
+            self.vault.assets_dir(),
+            self.vault.folio_dir().join("versions"),
+            self.vault.folio_dir().join("trash"),
+            self.vault.folio_dir().join("recovery"),
+        ] {
+            if !root.exists() {
+                continue;
+            }
+            for path in crate::atomic::walk_files(&root)? {
+                paths.push(path);
+            }
+        }
+        for path in &paths {
+            let encrypted = fs::read(path)?;
+            let plain = cipher.decrypt(&encrypted)?;
+            write_atomic(path, &plain)?;
+        }
+        let _ = fs::remove_file(crate::crypto::keyring_path(self.root()));
+        self.vault.meta.encryption.mode = "none".into();
+        self.vault.save_meta()?;
+        self.crypto = None;
+        Ok(())
+    }
+
+    pub fn open_with_password(root: &Path, password: &str) -> Result<Self, FolioError> {
+        let vault = Vault::open(root)?;
+        if vault.meta.encryption.mode != "password" {
+            return Ok(Self {
+                vault,
+                crypto: None,
+            });
+        }
+        let keyring = crate::crypto::load_keyring(root)?;
+        let cipher = crate::crypto::Cipher::unlock(password, &keyring)?;
+        // Un índice en claro de una versión anterior nunca debe sobrevivir.
+        let index = vault.index_path();
+        for path in [
+            index.clone(),
+            index.with_extension("sqlite-wal"),
+            index.with_extension("sqlite-shm"),
+        ] {
+            let _ = fs::remove_file(path);
+        }
+        Ok(Self {
+            vault,
+            crypto: Some(Arc::new(cipher)),
+        })
+    }
+
+    pub fn open_with_recovery(root: &Path, phrase: &str) -> Result<Self, FolioError> {
+        let vault = Vault::open(root)?;
+        let keyring = crate::crypto::load_keyring(root)?;
+        let cipher = crate::crypto::Cipher::from_recovery(phrase, &keyring)?;
+        let index = vault.index_path();
+        for path in [
+            index.clone(),
+            index.with_extension("sqlite-wal"),
+            index.with_extension("sqlite-shm"),
+        ] {
+            let _ = fs::remove_file(path);
+        }
+        Ok(Self {
+            vault,
+            crypto: Some(Arc::new(cipher)),
+        })
+    }
+
+    pub fn is_encrypted(&self) -> bool {
+        self.vault.meta.encryption.mode == "password"
+    }
+
+    pub fn is_unlocked(&self) -> bool {
+        !self.is_encrypted() || self.crypto.is_some()
+    }
+
+    pub fn crypto(&self) -> Option<&crate::crypto::Cipher> {
+        self.crypto.as_deref()
+    }
+
+    pub fn unlock(&mut self, password: &str) -> Result<(), FolioError> {
+        if !self.is_encrypted() {
+            return Ok(());
+        }
+        let keyring = crate::crypto::load_keyring(self.root())?;
+        self.crypto = Some(Arc::new(crate::crypto::Cipher::unlock(password, &keyring)?));
+        Ok(())
+    }
+
+    pub fn unlock_recovery(&mut self, phrase: &str) -> Result<(), FolioError> {
+        if !self.is_encrypted() {
+            return Ok(());
+        }
+        let keyring = crate::crypto::load_keyring(self.root())?;
+        self.crypto = Some(Arc::new(crate::crypto::Cipher::from_recovery(
+            phrase, &keyring,
+        )?));
+        Ok(())
+    }
+
+    pub fn lock(&mut self) {
+        self.crypto = None;
+        self.clear_plain_cache();
+    }
+
+    /// Borra las copias descifradas de assets usadas solo para mostrar.
+    pub fn clear_plain_cache(&self) {
+        let cache = self.vault.folio_dir().join("cache").join("plain");
+        if cache.exists() {
+            let _ = fs::remove_dir_all(cache);
+        }
+    }
+
+    fn ensure_unlocked(&self) -> Result<(), FolioError> {
+        if !self.is_unlocked() {
+            return Err(FolioError::Locked(self.vault.root.display().to_string()));
+        }
+        Ok(())
+    }
+
+    pub fn read_file(&self, path: &Path) -> Result<Vec<u8>, FolioError> {
+        self.ensure_unlocked()?;
+        let bytes = fs::read(path)?;
+        match &self.crypto {
+            Some(cipher) => {
+                if !crate::crypto::is_encrypted(&bytes) {
+                    return Err(FolioError::Corrupt(format!(
+                        "archivo sin cifrar en bóveda cifrada: {}",
+                        path.display()
+                    )));
+                }
+                cipher.decrypt(&bytes)
+            }
+            None => Ok(bytes),
+        }
+    }
+
+    pub fn write_file(&self, path: &Path, bytes: &[u8]) -> Result<(), FolioError> {
+        self.ensure_unlocked()?;
+        match &self.crypto {
+            Some(cipher) => write_atomic(path, &cipher.encrypt(bytes)?),
+            None => write_atomic(path, bytes),
+        }
+    }
+
+    pub fn load_note_at(&self, path: &Path) -> Result<Note, FolioError> {
+        let bytes = self.read_file(path)?;
+        let note = Note::from_json(&bytes).map_err(|error| match error {
+            FolioError::Json(_) => {
+                FolioError::Corrupt(format!("{}: json inválido", path.display()))
+            }
+            other => other,
+        })?;
+        note.validate()?;
+        Ok(note)
+    }
+
+    pub fn asset_display_path(&self, hash: &str) -> Result<Option<PathBuf>, FolioError> {
+        let Some(source) = crate::assets::resolve(&self.vault, hash)? else {
+            return Ok(None);
+        };
+        let Some(cipher) = &self.crypto else {
+            return Ok(Some(source));
+        };
+        let dir = self.vault.folio_dir().join("cache").join("plain");
+        std::fs::create_dir_all(&dir)?;
+        let extension = source
+            .extension()
+            .and_then(|extension| extension.to_str())
+            .unwrap_or("bin");
+        let target = dir.join(format!("{hash}.{extension}"));
+        if !target.exists() {
+            let encrypted = fs::read(&source)?;
+            let plain = cipher.decrypt(&encrypted)?;
+            write_atomic(&target, &plain)?;
+            #[cfg(unix)]
+            crate::atomic::set_mode(&target, 0o600)?;
+        }
+        Ok(Some(target))
     }
 
     pub fn root(&self) -> &Path {
@@ -62,6 +332,7 @@ impl Store {
 
     /// Lista libros tolerando carpetas corruptas (se reportan aparte).
     pub fn scan_books(&self) -> Result<BookScan, FolioError> {
+        self.ensure_unlocked()?;
         let dir = self.vault.books_dir();
         ensure_dir(&dir)?;
         let mut books = Vec::new();
@@ -73,7 +344,7 @@ impl Store {
             }
             let path = entry.path();
             let folder = entry.file_name().to_string_lossy().to_string();
-            match Book::load(&path, folder) {
+            match Book::load_with(&path, folder, self.crypto()) {
                 Ok(book) => books.push(book),
                 Err(error) => errors.push((path, error)),
             }
@@ -121,7 +392,11 @@ impl Store {
             return Ok(existing);
         }
         let id = ids::new_id();
-        let folder = folder_name(folder_base, &id);
+        let folder = if self.is_encrypted() {
+            id.clone()
+        } else {
+            folder_name(folder_base, &id)
+        };
         let mut book = Book::new(
             title,
             kind,
@@ -131,16 +406,17 @@ impl Store {
             clock,
         );
         book.meta.id = id;
-        book.create_on_disk(&self.vault)?;
+        book.create_on_disk_with(&self.vault, self.crypto())?;
         Ok(book)
     }
 
     pub fn save_book(&self, book: &mut Book, clock: &dyn Clock) -> Result<(), FolioError> {
         book.touch(clock);
-        book.save()
+        book.save_with(self.crypto())
     }
 
     pub fn notes(&self, book: &Book) -> Result<Vec<NoteSummary>, FolioError> {
+        self.ensure_unlocked()?;
         let dir = book.notes_dir();
         ensure_dir(&dir)?;
         let mut notes = Vec::new();
@@ -153,7 +429,7 @@ impl Store {
             let Some((order_key, _)) = parse_note_filename(&name) else {
                 continue;
             };
-            match load_note_file(&entry.path()) {
+            match load_note_file_with(&entry.path(), self.crypto()) {
                 Ok(note) => notes.push(summary(&note, &book.meta.id, entry.path(), order_key)),
                 Err(error) => {
                     tracing::warn!("nota ilegible {}: {error}", entry.path().display());
@@ -189,19 +465,19 @@ impl Store {
         let note = Note::new(title, clock);
         let path = book.notes_dir().join(format!("{key}_{}.json", note.id));
         let json = note.to_pretty_json()?;
-        write_atomic(&path, json.as_bytes())?;
+        self.write_file(&path, json.as_bytes())?;
         Ok(note)
     }
 
     pub fn load_note(&self, book: &Book, note_id: &str) -> Result<Note, FolioError> {
         let (path, _key) = self.note_location(book, note_id)?;
-        load_note_file(&path)
+        self.load_note_at(&path)
     }
 
     pub fn find_note(&self, note_id: &str) -> Result<(Book, Note), FolioError> {
         for book in self.list_books()? {
             if let Ok((path, _key)) = self.note_location(&book, note_id) {
-                let note = load_note_file(&path)?;
+                let note = self.load_note_at(&path)?;
                 return Ok((book, note));
             }
         }
@@ -231,8 +507,8 @@ impl Store {
             Err(error) => return Err(error),
         };
         let json = note.to_pretty_json()?;
-        write_atomic(&path, json.as_bytes())?;
-        let _ = versions::maybe_snapshot(&self.vault, note, clock, false);
+        self.write_file(&path, json.as_bytes())?;
+        let _ = versions::maybe_snapshot(&self.vault, note, clock, false, self.crypto());
         Ok(path)
     }
 
@@ -243,8 +519,8 @@ impl Store {
         clock: &dyn Clock,
     ) -> Result<PathBuf, FolioError> {
         let (path, _key) = self.note_location(book, note_id)?;
-        let note = load_note_file(&path)?;
-        trash::trash_note(&self.vault, book, &path, &note, clock)
+        let note = self.load_note_at(&path)?;
+        trash::trash_note(&self.vault, book, &path, &note, clock, self.crypto())
     }
 
     pub fn move_note(
@@ -258,7 +534,7 @@ impl Store {
             return self.reorder_note(from, note_id, position);
         }
         let (source, _key) = self.note_location(from, note_id)?;
-        let note = load_note_file(&source)?;
+        let note = self.load_note_at(&source)?;
         ensure_dir(&to.notes_dir())?;
         let target_keys = self.note_keys(to)?;
         let key = match position {
@@ -481,7 +757,7 @@ impl Store {
                 if results.len() >= limit {
                     return Ok(results);
                 }
-                let note = match load_note_file(&summary.path) {
+                let note = match self.load_note_at(&summary.path) {
                     Ok(note) => note,
                     Err(_) => continue,
                 };
@@ -528,6 +804,31 @@ pub fn parse_note_filename(name: &str) -> Option<(String, String)> {
 
 pub fn load_note_file(path: &Path) -> Result<Note, FolioError> {
     let bytes = fs::read(path)?;
+    let note = Note::from_json(&bytes).map_err(|error| match error {
+        FolioError::Json(_) => FolioError::Corrupt(format!("{}: json inválido", path.display())),
+        other => other,
+    })?;
+    note.validate()?;
+    Ok(note)
+}
+
+pub fn load_note_file_with(
+    path: &Path,
+    cipher: Option<&crate::crypto::Cipher>,
+) -> Result<Note, FolioError> {
+    let bytes = fs::read(path)?;
+    let bytes = match cipher {
+        Some(cipher) => {
+            if !crate::crypto::is_encrypted(&bytes) {
+                return Err(FolioError::Corrupt(format!(
+                    "nota sin cifrar en bóveda cifrada: {}",
+                    path.display()
+                )));
+            }
+            cipher.decrypt(&bytes)?
+        }
+        None => bytes,
+    };
     let note = Note::from_json(&bytes).map_err(|error| match error {
         FolioError::Json(_) => FolioError::Corrupt(format!("{}: json inválido", path.display())),
         other => other,
@@ -711,7 +1012,7 @@ mod tests {
         let trashed = store.delete_note(&book, &note.id, &clock).unwrap();
         assert!(trashed.exists());
         assert!(store.load_note(&book, &note.id).is_err());
-        let restored = trash::restore(&store.vault, &trashed).unwrap();
+        let restored = trash::restore(&store.vault, &trashed, None).unwrap();
         assert!(restored.exists());
         assert_eq!(store.load_note(&book, &note.id).unwrap().id, note.id);
     }

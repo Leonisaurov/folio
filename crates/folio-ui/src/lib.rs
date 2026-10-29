@@ -22,11 +22,17 @@ use crate::window::App;
 const APP_ID: &str = "io.github.leonisauro.Folio";
 
 /// Arranca la aplicación gráfica y no retorna hasta que se cierra.
-pub fn run(vault: Option<PathBuf>, config: Config, quit_after_init: bool) -> glib::ExitCode {
+pub fn run(
+    vault: Option<PathBuf>,
+    config: Config,
+    quit_after_init: bool,
+    password: Option<String>,
+) -> glib::ExitCode {
     let application = adw::Application::builder().application_id(APP_ID).build();
 
     let config_for_activate = config.clone();
     let vault_for_activate = vault.clone();
+    let password_for_activate = password.clone();
     let config_startup = config.clone();
     application.connect_startup(move |application| {
         load_css();
@@ -36,10 +42,17 @@ pub fn run(vault: Option<PathBuf>, config: Config, quit_after_init: bool) -> gli
 
     application.connect_activate(move |application| {
         match &vault_for_activate {
-            Some(path) => match open_vault(application, path, &config_for_activate) {
-                Ok(_) => {}
-                Err(error) => show_fatal(application, &error.to_string()),
-            },
+            Some(path) => {
+                match open_vault_maybe_locked(
+                    application,
+                    path,
+                    &config_for_activate,
+                    password_for_activate.as_deref(),
+                ) {
+                    Ok(_) => {}
+                    Err(error) => show_fatal(application, &error.to_string()),
+                }
+            }
             None => show_welcome(application, &config_for_activate),
         }
         if quit_after_init {
@@ -69,6 +82,122 @@ pub fn open_vault(
     };
     let state = AppState::new(store, config)?;
     Ok(App::new(state, application))
+}
+
+fn open_vault_maybe_locked(
+    application: &adw::Application,
+    path: &std::path::Path,
+    config: &Config,
+    password: Option<&str>,
+) -> Result<(), folio_core::FolioError> {
+    let mode = folio_store::Store::encryption_mode(path)?;
+    if mode != "password" {
+        open_vault(application, path, config)?;
+        return Ok(());
+    }
+    if let Some(password) = password
+        && let Ok(store) = folio_store::Store::open_with_password(path, password)
+    {
+        open_vault_with_store(application, path, config, store)?;
+        return Ok(());
+    }
+    if let Ok(password) = std::env::var("FOLIO_PASSWORD")
+        && let Ok(store) = folio_store::Store::open_with_password(path, &password)
+    {
+        open_vault_with_store(application, path, config, store)?;
+        return Ok(());
+    }
+    show_unlock(application, path, config);
+    Ok(())
+}
+
+fn open_vault_with_store(
+    application: &adw::Application,
+    path: &std::path::Path,
+    fallback_config: &Config,
+    store: folio_store::Store,
+) -> Result<Rc<App>, folio_core::FolioError> {
+    let config = match crate::helpers::load_config(Some(path)) {
+        Ok(config) => config,
+        Err(error) => {
+            tracing::warn!("configuración inválida: {error}");
+            fallback_config.clone()
+        }
+    };
+    let state = AppState::new(store, config)?;
+    Ok(App::new(state, application))
+}
+
+fn show_unlock(application: &adw::Application, path: &std::path::Path, config: &Config) {
+    let window = adw::ApplicationWindow::builder()
+        .application(application)
+        .title("Desbloquear bóveda")
+        .default_width(460)
+        .default_height(300)
+        .build();
+    let toolbar = adw::ToolbarView::new();
+    toolbar.add_top_bar(&adw::HeaderBar::new());
+    let box_ = gtk::Box::new(gtk::Orientation::Vertical, 10);
+    box_.set_margin_top(24);
+    box_.set_margin_bottom(24);
+    box_.set_margin_start(24);
+    box_.set_margin_end(24);
+    let title = gtk::Label::new(Some("Bóveda cifrada"));
+    title.add_css_class("welcome-title");
+    box_.append(&title);
+    let subtitle = gtk::Label::new(Some(
+        "Introduce la contraseña o la frase de recuperación de 24 palabras.",
+    ));
+    subtitle.set_wrap(true);
+    subtitle.add_css_class("caption");
+    box_.append(&subtitle);
+    let password = gtk::PasswordEntry::new();
+    password.set_placeholder_text(Some("Contraseña"));
+    password.set_show_peek_icon(true);
+    password.set_activates_default(true);
+    box_.append(&password);
+    let recovery = gtk::Entry::new();
+    recovery.set_placeholder_text(Some("Frase de recuperación (opcional)"));
+    box_.append(&recovery);
+    let error = gtk::Label::new(None);
+    error.add_css_class("missing");
+    error.set_wrap(true);
+    box_.append(&error);
+    let unlock = gtk::Button::with_label("Desbloquear");
+    unlock.add_css_class("suggested-action");
+    unlock.set_receives_default(true);
+    window.set_default_widget(Some(&unlock));
+    box_.append(&unlock);
+    toolbar.set_content(Some(&box_));
+    window.set_content(Some(&toolbar));
+    window.present();
+
+    let application = application.clone();
+    let path = path.to_path_buf();
+    let config = config.clone();
+    let window_for_unlock = window.clone();
+    let password_entry = password.clone();
+    let recovery_entry = recovery.clone();
+    let error_label = error.clone();
+    let enter_button = unlock.clone();
+    password.connect_activate(move |_| enter_button.emit_clicked());
+    let enter_button = unlock.clone();
+    recovery.connect_activate(move |_| enter_button.emit_clicked());
+    unlock.connect_clicked(move |_| {
+        let result = if !recovery_entry.text().trim().is_empty() {
+            folio_store::Store::open_with_recovery(&path, &recovery_entry.text())
+        } else {
+            folio_store::Store::open_with_password(&path, &password_entry.text())
+        };
+        match result {
+            Ok(store) => match open_vault_with_store(&application, &path, &config, store) {
+                Ok(_) => window_for_unlock.close(),
+                Err(error) => error_label.set_text(&error.to_string()),
+            },
+            Err(error) => error_label.set_text(&error.to_string()),
+        }
+    });
+    password.grab_focus();
 }
 
 fn show_welcome(application: &adw::Application, config: &Config) {

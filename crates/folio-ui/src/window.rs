@@ -1,7 +1,7 @@
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::rc::Weak;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use folio_core::{Block, FolioError, model::BlockContent};
 use gtk::prelude::*;
@@ -32,6 +32,7 @@ pub struct App {
     pub mode_label: gtk::Label,
     self_ref: RefCell<Weak<App>>,
     config_monitors: RefCell<Vec<gio::FileMonitor>>,
+    last_activity: Cell<Instant>,
 }
 
 impl App {
@@ -260,6 +261,7 @@ impl App {
             mode_label,
             self_ref: RefCell::new(Weak::new()),
             config_monitors: RefCell::new(Vec::new()),
+            last_activity: Cell::new(Instant::now()),
         });
         *app.self_ref.borrow_mut() = Rc::downgrade(&app);
 
@@ -267,6 +269,7 @@ impl App {
         connect_widgets(&app, &new_note, &new_book, &add_note, &today);
         app.install_config_watch();
         app.install_day_watch();
+        app.install_auto_lock();
         app.refresh_all();
         app.window.present();
         app
@@ -313,6 +316,11 @@ impl App {
             self.sidebar.remove(&child);
         }
         let state = self.state.borrow();
+        if state.locked {
+            drop(state);
+            self.notes_title.set_text("Bóveda bloqueada");
+            return Ok(());
+        }
         let books = state.books()?;
         let current = state.current_book.clone();
         let mode = state.mode;
@@ -442,6 +450,11 @@ impl App {
             self.notes.remove(&child);
         }
         let state = self.state.borrow();
+        if state.locked {
+            drop(state);
+            self.notes_title.set_text("Bóveda bloqueada");
+            return Ok(());
+        }
         let notes = state.notes()?;
         let current_note = state.current_note.as_ref().map(|note| note.id.clone());
         let book_title = state
@@ -540,6 +553,31 @@ impl App {
             self.editor.remove(&child);
         }
         let state = self.state.borrow();
+        if state.locked {
+            drop(state);
+            self.suppress_title.set(true);
+            self.title_entry.set_text("");
+            self.suppress_title.set(false);
+            let lock = gtk::Box::new(gtk::Orientation::Vertical, 12);
+            lock.set_valign(gtk::Align::Center);
+            lock.set_halign(gtk::Align::Center);
+            let title = gtk::Label::new(Some("Bóveda bloqueada"));
+            title.add_css_class("empty-title");
+            lock.append(&title);
+            let hint = gtk::Label::new(Some(
+                "La clave se descartó de memoria y el contenido está oculto.",
+            ));
+            hint.add_css_class("caption");
+            lock.append(&hint);
+            let unlock = gtk::Button::with_label("Desbloquear");
+            unlock.add_css_class("suggested-action");
+            unlock.set_action_name(Some("win.unlock"));
+            lock.append(&unlock);
+            self.editor.append(&lock);
+            self.mode_label.set_text("Bloqueada");
+            self.set_status("Bóveda bloqueada");
+            return;
+        }
         let Some(note) = state.current_note.clone() else {
             drop(state);
             self.suppress_title.set(true);
@@ -670,7 +708,11 @@ impl App {
         {
             let state = self.state.borrow();
             if let Some(note) = &state.current_note {
-                let _ = folio_store::doctor::write_recovery(&state.store.vault, note);
+                let _ = folio_store::doctor::write_recovery(
+                    &state.store.vault,
+                    note,
+                    state.store.crypto(),
+                );
             }
         }
         let ms = self
@@ -834,8 +876,11 @@ impl App {
             move |result| {
                 let Ok(file) = result else { return };
                 let Some(path) = file.path() else { return };
-                let store = app.state.borrow().store.vault.clone();
-                let hash = match folio_store::assets::import_file(&store, &path) {
+                let (store, cipher) = {
+                    let state = app.state.borrow();
+                    (state.store.vault.clone(), state.store.crypto().cloned())
+                };
+                let hash = match folio_store::assets::import_file(&store, &path, cipher.as_ref()) {
                     Ok(hash) => hash,
                     Err(error) => {
                         app.report(&error);
@@ -971,6 +1016,67 @@ impl App {
             }
             glib::ControlFlow::Continue
         });
+    }
+
+    fn install_auto_lock(&self) {
+        let activity = Rc::new(Cell::new(Instant::now()));
+        let key = gtk::EventControllerKey::new();
+        let activity_key = activity.clone();
+        key.connect_key_pressed(move |_, _, _, _| {
+            activity_key.set(Instant::now());
+            glib::Propagation::Proceed
+        });
+        self.window.add_controller(key);
+        let motion = gtk::EventControllerMotion::new();
+        let activity_motion = activity.clone();
+        motion.connect_motion(move |_, _, _| activity_motion.set(Instant::now()));
+        self.window.add_controller(motion);
+        let app = self.clone_ref();
+        glib::timeout_add_seconds_local(15, move || {
+            let (encrypted, locked, minutes) = {
+                let state = app.state.borrow();
+                (
+                    state.store.is_encrypted(),
+                    state.locked,
+                    state.config.int("vault.auto_lock_min").clamp(1, 120) as u64,
+                )
+            };
+            if encrypted && !locked && activity.get().elapsed().as_secs() >= minutes * 60 {
+                app.lock_vault();
+            }
+            glib::ControlFlow::Continue
+        });
+    }
+
+    pub fn lock_vault(&self) {
+        let encrypted = self.state.borrow().store.is_encrypted();
+        if !encrypted {
+            return;
+        }
+        if let Some(source) = self.autosave.take() {
+            source.remove();
+        }
+        self.state.borrow_mut().lock();
+        self.refresh_sidebar_inner_public();
+        self.refresh_notes_inner_public();
+        self.refresh_editor();
+        self.toast("Bóveda bloqueada por inactividad");
+    }
+
+    pub fn unlock_vault(&self, password: &str) -> Result<(), FolioError> {
+        self.state.borrow_mut().unlock(password)?;
+        self.last_activity.set(Instant::now());
+        self.refresh_all();
+        self.toast("Bóveda desbloqueada");
+        Ok(())
+    }
+
+    pub fn unlock_vault_recovery(&self, phrase: &str) -> Result<(), FolioError> {
+        self.state.borrow_mut().unlock_recovery(phrase)?;
+        self.last_activity.set(Instant::now());
+        self.refresh_all();
+        self.toast("Bóveda desbloqueada con la frase de recuperación");
+        Ok(())
     }
 
     pub fn clone_ref(&self) -> Rc<App> {
@@ -1266,6 +1372,8 @@ fn setup_actions(app: &Rc<App>) {
             }
         });
     });
+    install_action(app, "lock", |app| app.lock_vault());
+    install_action(app, "unlock", dialogs::prompt_unlock);
     install_action(app, "about", |app| {
         let dialog = gtk::AboutDialog::builder()
             .program_name("Folio")
@@ -1338,6 +1446,7 @@ fn setup_actions(app: &Rc<App>) {
         ("undo", "<Control>z"),
         ("redo", "<Control><Shift>z"),
         ("delete-note", "<Control>Delete"),
+        ("lock", "<Control><Shift>l"),
     ] {
         app.application
             .set_accels_for_action(&format!("win.{action}"), &[accel]);
@@ -1430,6 +1539,7 @@ fn build_menu() -> gio::Menu {
     menu.append_section(None, &data);
 
     let tools = gio::Menu::new();
+    tools.append(Some("Bloquear bóveda"), Some("win.lock"));
     tools.append(Some("Plugins"), Some("win.plugins"));
     tools.append(Some("Ajustes"), Some("win.settings"));
     tools.append(Some("Eliminar nota"), Some("win.delete-note"));

@@ -91,7 +91,25 @@ siendo verificable.
 `.folio/lock` contiene el PID. Si otra instancia viva lo tiene, la segunda no
 escribe. Un lock de un proceso muerto se recupera automáticamente.
 
-## 9. Caos y verificación
+## 9. Bóveda cifrada
+
+- Clave: `VK` de 32 bytes; `KEK = Argon2id(contraseña, sal, 64 MiB, t=3, p=4)`.
+- `.folio/keyring.json` contiene sal, parámetros, nonce y VK envuelta; permisos 0600.
+- Cada archivo de datos: `FOLIOENC1 || nonce(24) || ciphertext`.
+- La frase de recuperación BIP39 de 24 palabras codifica la VK. El keyring guarda
+  un hash para rechazar frases de otra bóveda.
+- El índice se reconstruye en memoria tras desbloquear; no hay `index.sqlite` en
+  claro. La caché de assets descifrados se borra al bloquear.
+- Si pierdes contraseña y frase, no hay recuperación posible. Guarda la frase fuera
+  de la bóveda.
+- Los backups de una bóveda cifrada siguen cifrados. Los backups antiguos en claro
+  deben cifrarse o eliminarse manualmente.
+
+```bash
+folio --vault ~/Notas --recovery "palabra1 palabra2 … palabra24" note list --book today
+```
+
+## 10. Caos y verificación
 
 ```bash
 ./scripts/chaos.sh       # kill -9 en 20 guardados y 30 movimientos
