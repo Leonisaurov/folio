@@ -652,15 +652,15 @@ Un ecosistema real: host WASM, SDK, UI nativa, permisos, gestor y tres plugins q
 
 ### Puerta E10
 
-- [ ] Los 3 plugins del MVP funcionan en una nota real y en CI.
-- [ ] Instalar/desinstalar/deshabilitar desde la UI.
-- [ ] Un plugin sin `network` no puede hacer HTTP.
-- [ ] Un bucle infinito se corta sin congelar la UI.
-- [ ] Un panic no cierra la app.
-- [ ] El estado de un bloque sobrevive a desinstalar/reinstalar.
-- [ ] La UI del plugin respeta tema, escala y teclado.
-- [ ] La API 1.0 está congelada y documentada.
-- [ ] Un tercero crea un plugin siguiendo la guía (prueba con usuario).
+- [x] Los 3 plugins del MVP funcionan en una nota real y en CI.
+- [x] Instalar/desinstalar/deshabilitar desde la UI.
+- [x] Un plugin sin `network` no puede hacer HTTP.
+- [x] Un bucle infinito se corta sin congelar la UI.
+- [x] Un panic no cierra la app.
+- [x] El estado de un bloque sobrevive a desinstalar/reinstalar.
+- [x] La UI del plugin respeta tema, escala y teclado.
+- [x] La API 1.0 está congelada y documentada.
+- [ ] Un tercero crea un plugin siguiendo la guía (prueba manual con usuario).
 
 ### Verificación
 
