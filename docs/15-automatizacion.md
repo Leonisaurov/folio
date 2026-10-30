@@ -220,8 +220,7 @@ Buenas prácticas:
 
 ### 9.1 WebKit en CI
 
-GitHub Actions puede bloquear `bwrap`/user namespaces. En ese caso el job de
-WebKit define `FOLIO_TEST_NO_WEBKIT_SANDBOX=1`; el test sigue verificando perfil
-efímero, cookies, storage, WebGL y permisos, pero el sandbox del proceso web se
-valida en local con `scripts/webkit.sh` (sin esa variable). No se usa esta opción
-en la app distribuida.
+GitHub Actions bloquea `bwrap`/user namespaces. Por eso el CI solo **compila y
+enlaza** el test de WebKit; el aislamiento real (perfil efímero, cookies, storage,
+WebGL y permisos) se ejecuta en local con `scripts/webkit.sh`. No se desactiva el
+sandbox en la app distribuida.
