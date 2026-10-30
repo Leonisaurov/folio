@@ -35,6 +35,7 @@ cp target/release/folio "$DIST/$NAME/bin/"
 cp target/release/folio-tools "$DIST/$NAME/bin/"
 cp README.md LICENSE CHANGELOG.md "$DIST/$NAME/"
 cp -r docs "$DIST/$NAME/"
+cp -r plugins "$DIST/$NAME/"
 tar -C "$DIST" -czf "$DIST/$NAME.tar.gz" "$NAME"
 ( cd "$DIST" && sha256sum "$NAME.tar.gz" >"$NAME.tar.gz.sha256" )
 

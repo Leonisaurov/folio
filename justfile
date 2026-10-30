@@ -46,6 +46,9 @@ a11y:
 deb:
     ./scripts/build-deb.sh
 
+arch:
+    ./scripts/build-arch.sh
+
 beta-check:
     ./scripts/beta-check.sh
 

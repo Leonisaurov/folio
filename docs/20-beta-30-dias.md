@@ -38,7 +38,8 @@ dist/beta/<versión>/
 - [ ] `./scripts/build-deb.sh` verificado.
 - [ ] `./scripts/beta.sh` genera artefactos y `SHA256SUMS`.
 - [ ] `docs/21-release-1.0.md` revisado.
-- [ ] 5–10 testers aceptados; cada uno con backup inicial.
+- [ ] 5–10 testers invitados desde el issue/release de GitHub (`docs/23`).
+- [ ] Cada tester tiene backup inicial y sabe que no hay telemetría.
 - [ ] Canal de feedback y responsable de triage definidos.
 - [ ] Confirmar que no se recoge telemetría ni se activa red por defecto.
 

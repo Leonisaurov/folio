@@ -1,0 +1,37 @@
+name: Beta release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*-beta*"
+
+permissions:
+  contents: write
+
+jobs:
+  beta:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Dependencias
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-4-dev libadwaita-1-dev libsqlite3-dev \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            libwebkitgtk-6.0-dev poppler-utils xvfb dbus-x11 appstream \
+            desktop-file-utils zstd
+      - name: Preparar beta
+        run: ./scripts/beta.sh
+      - name: Publicar pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0-beta.${{ github.run_number }}
+          prerelease: true
+          name: Folio 1.0.0 beta ${{ github.run_number }}
+          body_path: docs/23-beta-github.md
+          files: |
+            dist/beta/*/*

@@ -32,7 +32,8 @@ mkdir -p "$PKGROOT/DEBIAN" "$PKGROOT/usr/bin" \
     "$PKGROOT/usr/share/applications" \
     "$PKGROOT/usr/share/metainfo" \
     "$PKGROOT/usr/share/icons/hicolor/scalable/apps" \
-    "$PKGROOT/usr/share/doc/folio"
+    "$PKGROOT/usr/share/doc/folio" \
+    "$PKGROOT/usr/share/folio/plugins"
 install -m755 target/release/folio "$PKGROOT/usr/bin/folio"
 install -m755 target/release/folio-tools "$PKGROOT/usr/bin/folio-tools"
 install -m644 flatpak/io.github.leonisauro.Folio.desktop \
@@ -44,6 +45,7 @@ install -m644 flatpak/io.github.leonisauro.Folio.svg \
 install -m644 docs/16-manual-usuario.md "$PKGROOT/usr/share/doc/folio/manual.md"
 install -m644 docs/17-recuperacion.md "$PKGROOT/usr/share/doc/folio/recuperacion.md"
 install -m644 LICENSE "$PKGROOT/usr/share/doc/folio/copyright"
+cp -r plugins/* "$PKGROOT/usr/share/folio/plugins/"
 
 INSTALLED_KIB="$(du -sk "$PKGROOT" | cut -f1)"
 cat >"$PKGROOT/DEBIAN/control" <<EOF
@@ -83,5 +85,6 @@ fi
 test -x "$TMP/extract/usr/bin/folio"
 test -f "$TMP/extract/usr/share/applications/io.github.leonisauro.Folio.desktop"
 test -f "$TMP/extract/usr/share/metainfo/io.github.leonisauro.Folio.metainfo.xml"
+test -d "$TMP/extract/usr/share/folio/plugins"
 appstreamcli validate "$TMP/extract/usr/share/metainfo/io.github.leonisauro.Folio.metainfo.xml" >/dev/null
 log ".deb verificado: $(stat -c '%s' "$DEB") bytes"

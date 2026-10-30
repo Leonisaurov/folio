@@ -1,4 +1,4 @@
-# 19 — Empaquetado `.deb`
+# 19 — Empaquetado `.deb` y Arch
 
 ## 1. Construcción
 
@@ -34,6 +34,7 @@ dist/folio_<versión>_<arquitectura>.deb
 /usr/share/doc/folio/manual.md
 /usr/share/doc/folio/recuperacion.md
 /usr/share/doc/folio/copyright
+/usr/share/folio/plugins/
 ```
 
 ## 3. Dependencias
@@ -42,7 +43,31 @@ dist/folio_<versión>_<arquitectura>.deb
 `libpango-1.0-0`, `libgstreamer1.0-0` y, si se compiló la feature,
 `libwebkitgtk-6.0-4`.
 
-## 4. Verificación manual en VM limpia
+## 3.1 Arch/pacman
+
+```bash
+./scripts/build-arch.sh
+```
+
+Construye `dist/arch/folio-1.0.0-1-x86_64.pkg.tar.zst` con `makepkg --nodeps`,
+lo verifica con `pacman -Qp`, extrae el paquete con `bsdtar` y ejecuta
+`usr/bin/folio --version`. El PKGBUILD instala binarios, desktop, metainfo, icono,
+manuales y los plugins de ejemplo en `/usr/share/folio/plugins`.
+
+## 4. Verificación en contenedores limpios
+
+Ejecutado el 2026-10-30:
+
+```text
+Ubuntu 24.04 + .deb  → INSTALL_OK · folio 1.0.0 · PLUGINS_OK
+Arch Linux + pacman  → PACMAN_INSTALL_OK · folio 1.0.0 · PLUGINS_OK
+```
+
+Los contenedores se descargaron desde las imágenes oficiales; no se usó el
+sistema del usuario para instalar. La instalación gráfica completa y Wayland
+siguen requiriendo una VM de escritorio.
+
+## 5. Verificación manual en VM limpia
 
 ```bash
 sudo dpkg -i dist/folio_1.0.0_amd64.deb

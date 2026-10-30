@@ -38,10 +38,9 @@ plugins aislados con UI declarativa.
   importación Markdown saneada.
 - **Configuración**: un esquema único para TOML, CLI y GUI; precedencia y recarga.
 
-Limitaciones del MVP: el runtime WASM de terceros y la validación Flatpak/AUR en
-una VM limpia siguen pendientes; la auditoría de accesibilidad automatizada y el
-`.deb` ya están disponibles (ver [docs/12](docs/12-backlog-post-1.0.md), ADR-023,
-ADR-027, ADR-028, ADR-029 y ADR-030/031).
+Limitaciones: la publicación Flatpak/AUR en una VM limpia y la firma GPG siguen
+pendientes; el `.deb` y el paquete pacman ya se instalaron y verificaron en
+contenedores limpios. La beta está preparada para invitación desde GitHub.
 
 ## Compilar y ejecutar
 
@@ -81,8 +80,10 @@ Sin argumentos abre la GUI. `folio --vault <ruta>` abre una bóveda concreta.
 ./scripts/soak.sh --quick 30         # soak corto; sin --quick son 2 h
 ./scripts/a11y.sh                    # foco, etiquetas y escala 200 %
 ./scripts/build-deb.sh               # construye y verifica el .deb
+./scripts/build-arch.sh              # construye y verifica el paquete Arch/pacman
 ./scripts/beta-check.sh              # pre-beta: datos, backups, cifrado, sin telemetría
 ./scripts/beta.sh                    # prepara dist/beta/<versión>
+# Publicación beta: workflow .github/workflows/beta.yml o subir dist/beta/ a GitHub
 ./scripts/webkit.sh                  # aislamiento de la vista web viva
 cargo test -p folio-store --test encryption  # strings, temporales, recuperación
 cargo test -p folio-render --test pdf_golden # PDF, paginación y lienzo
@@ -126,6 +127,7 @@ medición y su entorno.
 | Accesibilidad | [docs/18-accesibilidad.md](docs/18-accesibilidad.md) |
 | Empaquetado .deb | [docs/19-empaquetado.md](docs/19-empaquetado.md) |
 | Beta de 30 días | [docs/20-beta-30-dias.md](docs/20-beta-30-dias.md) |
+| Probar la beta en GitHub | [docs/23-beta-github.md](docs/23-beta-github.md) |
 | Release 1.0 | [docs/21-release-1.0.md](docs/21-release-1.0.md) y [notas 1.0.0](docs/22-release-notes-1.0.0.md) |
 | Automatización aislada | [docs/15-automatizacion.md](docs/15-automatizacion.md) |
 

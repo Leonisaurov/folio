@@ -929,7 +929,7 @@ Fecha de cierre del MVP: **2026-10-29**. Estado verificado con
 | E10 | Implementado | 2026-10-29 | Manifiestos, permisos, firma, límites, 5 ejemplos y runtime WASM de terceros (ABI JSON, wasmi); WIT queda como contrato documental |
 | E11 | Implementado | 2026-10-29 | Backups verificables, restore, papelera, versiones, `doctor`, caos |
 | E12 | Implementado (auditoría automatizada) | 2026-10-29 | Foco, etiquetas, escala 200 %, contraste, alternativa al lienzo; revisión manual con lector de pantalla pendiente |
-| E13 | Implementado (parcial) | 2026-10-29 | Manifiestos Flatpak/AUR, AppStream, `.deb`, canal beta, checklist de 30 días y artefactos 1.0.0; build Flatpak/AUR en VM limpia y firma pendientes |
+| E13 | Implementado (parcial) | 2026-10-29 | Manifiestos Flatpak/AUR, AppStream, `.deb`, pacman, canal beta y artefactos 1.0.0; Flatpak/AUR publicado y firma pendientes |
 
 ### 17.1 1.0 en curso
 
@@ -939,7 +939,7 @@ Fecha de cierre del MVP: **2026-10-29**. Estado verificado con
 | 16 | Cifrado de bóveda | Implementado | `crates/folio-store/tests/encryption.rs`; `folio vault init --encrypt`; bloqueo/desbloqueo GUI |
 | 17 | PDF y plugins 4–5 | Implementado | `folio export --format pdf`; `crates/folio-render/tests/pdf_golden.rs`; 5 plugins de referencia |
 | 18 | Accesibilidad y `.deb` | Implementado | `scripts/a11y.sh`; `scripts/build-deb.sh`; `.deb` verificado en árbol temporal |
-| 19 | Cierre de beta | Preparado | `scripts/beta.sh`; `docs/20-beta-30-dias.md`; triage P0/P1 y rollback |
+| 19 | Cierre de beta | Canal preparado; invitación GitHub | `scripts/beta.sh`; `.github/workflows/beta.yml`; `docs/20` y `docs/23` |
 | 20 | Release 1.0 | Artefactos RC generados | `release.sh`, `build-deb.sh`, `dist/RELEASE-1.0.0.md`; firma/beta/VM pendientes |
 
 La vista viva usa `NetworkSession` efímera, deniega todos los permisos, cancela

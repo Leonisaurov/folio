@@ -4,6 +4,12 @@ Todas las fechas en formato ISO 8601. Este proyecto sigue [SemVer](https://semve
 
 ## [1.0.0] — 2026-10-29 (release candidate)
 
+### Empaquetado y beta
+
+- Paquete Arch/pacman verificado (`scripts/build-arch.sh`).
+- `.deb` y pacman instalados en contenedores limpios Ubuntu 24.04/Arch.
+- Canal beta `1.0.0`, workflow de pre-release y invitación GitHub.
+
 ### Runtime WASM de terceros
 
 - `WasmRuntime` sobre wasmi con ABI JSON api=1, fuel, memoria y tiempo limitados.

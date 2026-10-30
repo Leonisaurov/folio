@@ -21,6 +21,7 @@ DEB="$(ls -1 "$ROOT/dist"/folio_*_*.deb | tail -1)"
 cp "$DEB" "$CHANNEL_DIR/"
 cp "$ROOT/dist/beta-check.txt" "$CHANNEL_DIR/REPORT.txt"
 cp "$ROOT/docs/20-beta-30-dias.md" "$CHANNEL_DIR/CHECKLIST.md"
+cp "$ROOT/docs/23-beta-github.md" "$CHANNEL_DIR/GITHUB-BETA.md"
 
 log "Empaquetando binarios y checksums"
 FEATURE_ARGS=()

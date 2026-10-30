@@ -24,9 +24,12 @@ Ejecutado en el entorno de desarrollo:
 ./scripts/beta-check.sh       → BETA-CHECK OK
 ./scripts/release.sh          → tarball 1.0.0 + checksum, sin firma
 ./scripts/build-deb.sh        → .deb 1.0.0 verificado, sin firma
+./scripts/build-arch.sh       → paquete pacman 1.0.0 verificado
 ./scripts/release-manifest.sh → dist/RELEASE-1.0.0.md
 ./scripts/a11y.sh             → OK
 ./scripts/webkit.sh           → OK
+Ubuntu 24.04 (Docker)         → .deb instalado, folio 1.0.0
+Arch Linux (Docker)           → pacman instalado, folio 1.0.0
 ```
 
 Artefactos en `dist/`; checksums en el manifiesto. El release queda en estado
@@ -69,7 +72,8 @@ Artefactos en `dist/`; checksums en el manifiesto. El release queda en estado
 
 - Runtime WASM de terceros: implementado con ABI JSON/wasmi (ADR-033). El WIT
   queda como contrato de migración futura.
-- Validación Flatpak/AUR en VM limpia: requiere una máquina limpia y credenciales
-  de firma que solo el usuario puede proporcionar.
+- Publicación/validación Flatpak y AUR en una VM de escritorio limpia: el `.deb` y
+  el paquete pacman ya se verificaron en contenedores limpios, pero Flatpak y la
+  publicación AUR requieren credenciales/entorno del usuario.
 - Revisión manual con lector de pantalla/Wayland: requiere un tester humano.
 - Beta de 30 días: requiere testers reales; el canal y el checklist están listos.

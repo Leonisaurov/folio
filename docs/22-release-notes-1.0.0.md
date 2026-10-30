@@ -22,6 +22,7 @@
 ```text
 dist/folio-1.0.0-linux-x86_64.tar.gz
 dist/folio_1.0.0_amd64.deb
+dist/arch/folio-1.0.0-1-x86_64.pkg.tar.zst
 dist/RELEASE-1.0.0.md
 dist/beta/0.1.0/          # canal beta preparado en la semana 19
 ```
@@ -32,7 +33,8 @@ dist/beta/0.1.0/          # canal beta preparado en la semana 19
 
 1. Firma GPG con `FOLIO_SIGNING_KEY` (no hay clave en este entorno).
 2. Beta real de 30 días con testers; el canal y checklist están listos.
-3. Validación Flatpak/AUR en una VM limpia.
+3. Publicación Flatpak/AUR en una VM limpia; `.deb` y pacman ya se instalaron y
+   verificaron en contenedores limpios.
 4. Revisión manual con Orca/Wayland.
 5. ~~Decisión sobre el runtime WASM~~: implementado con ABI JSON/wasmi; queda
    validar la guía con un plugin externo.
