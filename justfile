@@ -49,6 +49,9 @@ deb:
 arch:
     ./scripts/build-arch.sh
 
+sign:
+    ./scripts/sign-artifacts.sh
+
 beta-check:
     ./scripts/beta-check.sh
 

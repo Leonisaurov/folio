@@ -50,6 +50,8 @@ Artefactos en `dist/`; checksums en el manifiesto. El release queda en estado
 - `.deb` se construye con `build-deb.sh` y se verifica por extracción.
 - `release-manifest.sh` verifica ambos artefactos y escribe `dist/RELEASE-<versión>.md`
   con checksums y bloqueos humanos.
+- `FOLIO_SIGNING_KEY=<huella> ./scripts/sign-artifacts.sh` firma tarball, `.deb`,
+  paquete pacman, manifiesto y `SHA256SUMS` (ver [docs/24](24-firma.md)).
 - Flatpak: `flatpak-builder --force-clean build-dir flatpak/...yml` en VM limpia.
 - AUR: `makepkg -si` en VM limpia.
 

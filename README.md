@@ -81,6 +81,7 @@ Sin argumentos abre la GUI. `folio --vault <ruta>` abre una bóveda concreta.
 ./scripts/a11y.sh                    # foco, etiquetas y escala 200 %
 ./scripts/build-deb.sh               # construye y verifica el .deb
 ./scripts/build-arch.sh              # construye y verifica el paquete Arch/pacman
+FOLIO_SIGNING_KEY=<huella> ./scripts/sign-artifacts.sh  # firma release
 ./scripts/beta-check.sh              # pre-beta: datos, backups, cifrado, sin telemetría
 ./scripts/beta.sh                    # prepara dist/beta/<versión>
 # Publicación beta: workflow .github/workflows/beta.yml o subir dist/beta/ a GitHub
@@ -129,6 +130,7 @@ medición y su entorno.
 | Beta de 30 días | [docs/20-beta-30-dias.md](docs/20-beta-30-dias.md) |
 | Probar la beta en GitHub | [docs/23-beta-github.md](docs/23-beta-github.md) |
 | Release 1.0 | [docs/21-release-1.0.md](docs/21-release-1.0.md) y [notas 1.0.0](docs/22-release-notes-1.0.0.md) |
+| Crear clave GPG y firmar | [docs/24-firma.md](docs/24-firma.md) |
 | Automatización aislada | [docs/15-automatizacion.md](docs/15-automatizacion.md) |
 
 Resumen ejecutivo del plan: [PLAN.md](PLAN.md).

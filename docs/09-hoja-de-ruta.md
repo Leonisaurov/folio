@@ -940,7 +940,7 @@ Fecha de cierre del MVP: **2026-10-29**. Estado verificado con
 | 17 | PDF y plugins 4–5 | Implementado | `folio export --format pdf`; `crates/folio-render/tests/pdf_golden.rs`; 5 plugins de referencia |
 | 18 | Accesibilidad y `.deb` | Implementado | `scripts/a11y.sh`; `scripts/build-deb.sh`; `.deb` verificado en árbol temporal |
 | 19 | Cierre de beta | Canal preparado; invitación GitHub | `scripts/beta.sh`; `.github/workflows/beta.yml`; `docs/20` y `docs/23` |
-| 20 | Release 1.0 | Artefactos RC generados | `release.sh`, `build-deb.sh`, `dist/RELEASE-1.0.0.md`; firma/beta/VM pendientes |
+| 20 | Release 1.0 | Artefactos RC generados; firma pendiente | `release.sh`, `build-deb.sh`, `sign-artifacts.sh`, `dist/RELEASE-1.0.0.md` |
 
 La vista viva usa `NetworkSession` efímera, deniega todos los permisos, cancela
 descargas, no persiste cookies ni almacenamiento local y termina el proceso web al
