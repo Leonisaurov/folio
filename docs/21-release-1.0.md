@@ -15,7 +15,24 @@
 3. Revisar `docs/09`, `docs/10`, `docs/14` y el changelog.
 4. Confirmar `Cargo.toml` versión `1.0.0` y `docs/09` estados.
 
-## 3. Artefactos
+## 3. Estado de ejecución (2026-10-29)
+
+Ejecutado en el entorno de desarrollo:
+
+```text
+./scripts/automation/all.sh   → OK
+./scripts/beta-check.sh       → BETA-CHECK OK
+./scripts/release.sh          → tarball 1.0.0 + checksum, sin firma
+./scripts/build-deb.sh        → .deb 1.0.0 verificado, sin firma
+./scripts/release-manifest.sh → dist/RELEASE-1.0.0.md
+./scripts/a11y.sh             → OK
+./scripts/webkit.sh           → OK
+```
+
+Artefactos en `dist/`; checksums en el manifiesto. El release queda en estado
+**RC no publicado** hasta completar los bloqueos humanos de la sección 6.
+
+## 4. Artefactos
 
 ```bash
 ./scripts/automation/all.sh
@@ -28,10 +45,12 @@
 
 - `release.sh` genera tarball y checksums; con `FOLIO_SIGNING_KEY` firma GPG.
 - `.deb` se construye con `build-deb.sh` y se verifica por extracción.
+- `release-manifest.sh` verifica ambos artefactos y escribe `dist/RELEASE-<versión>.md`
+  con checksums y bloqueos humanos.
 - Flatpak: `flatpak-builder --force-clean build-dir flatpak/...yml` en VM limpia.
 - AUR: `makepkg -si` en VM limpia.
 
-## 4. Publicación
+## 5. Publicación
 
 - [ ] Tag `v1.0.0` firmado.
 - [ ] Flatpak, AUR y `.deb` publicados.
@@ -39,14 +58,14 @@
 - [ ] Release notes con cambios, límites y recuperación.
 - [ ] Canal beta cerrado y enlace a 1.0.
 
-## 5. Rollback de release
+## 6. Rollback de release
 
 1. Retirar el artefacto defectuoso y avisar en la release.
 2. Republicar el artefacto anterior ya firmado, nunca reempaquetar en caliente.
 3. En datos: backup + restore a copia + `doctor`; no tocar la bóveda original.
 4. Abrir postmortem y convertir el fallo en test antes de la siguiente release.
 
-## 6. Pendientes que no bloquean el MVP pero sí la narrativa 1.0
+## 7. Pendientes que no bloquean el MVP pero sí la narrativa 1.0
 
 - Runtime WASM de terceros (ADR-023): decisión explícita de incluirlo en 1.0 o
   1.1. El contrato `api = 1` ya está congelado.

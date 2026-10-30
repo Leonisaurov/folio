@@ -569,7 +569,7 @@ checksum = "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb"
 
 [[package]]
 name = "folio-app"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "clap",
  "folio-config",
@@ -598,7 +598,7 @@ dependencies = [
 
 [[package]]
 name = "folio-config"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "folio-core",
  "serde",
@@ -612,7 +612,7 @@ dependencies = [
 
 [[package]]
 name = "folio-core"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "jiff",
  "serde",
@@ -623,7 +623,7 @@ dependencies = [
 
 [[package]]
 name = "folio-daily"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "folio-core",
  "jiff",
@@ -634,7 +634,7 @@ dependencies = [
 
 [[package]]
 name = "folio-layout"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "folio-core",
  "serde",
@@ -643,7 +643,7 @@ dependencies = [
 
 [[package]]
 name = "folio-plugin-sdk"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -652,7 +652,7 @@ dependencies = [
 
 [[package]]
 name = "folio-plugins"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "base64",
  "blake3",
@@ -669,7 +669,7 @@ dependencies = [
 
 [[package]]
 name = "folio-render"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "cairo-rs",
  "folio-core",
@@ -685,7 +685,7 @@ dependencies = [
 
 [[package]]
 name = "folio-store"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "argon2",
  "base64",
@@ -710,7 +710,7 @@ dependencies = [
 
 [[package]]
 name = "folio-tools"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "clap",
  "folio-config",
@@ -724,7 +724,7 @@ dependencies = [
 
 [[package]]
 name = "folio-ui"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "folio-config",
  "folio-core",

@@ -1,6 +1,6 @@
 # Maintainer: Folio contributors <maintainers@folio.invalid>
 pkgname=folio
-pkgver=0.1.0
+pkgver=1.0.0
 pkgrel=1
 pkgdesc="Notas y libros diarios con lienzo y plugins"
 arch=('x86_64')

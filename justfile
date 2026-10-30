@@ -52,6 +52,9 @@ beta-check:
 beta:
     ./scripts/beta.sh
 
+release-manifest:
+    ./scripts/release-manifest.sh
+
 perf:
     ./scripts/perf.sh
 

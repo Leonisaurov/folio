@@ -41,6 +41,8 @@ tar -C "$DIST" -czf "$DIST/$NAME.tar.gz" "$NAME"
 if [[ -n "${FOLIO_SIGNING_KEY:-}" ]] && have gpg; then
     log "Firmando con $FOLIO_SIGNING_KEY"
     gpg --armor --detach-sign --local-user "$FOLIO_SIGNING_KEY" "$DIST/$NAME.tar.gz"
+else
+    warn "Sin FOLIO_SIGNING_KEY/gpg: el artefacto queda SIN FIRMA."
 fi
 
 log "Artefactos en $DIST"

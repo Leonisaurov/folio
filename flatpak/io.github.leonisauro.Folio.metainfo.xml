@@ -45,9 +45,9 @@
     <keyword>canvas</keyword>
   </keywords>
   <releases>
-    <release version="0.1.0" date="2026-10-29">
+    <release version="1.0.0" date="2026-10-29">
       <description>
-        <p>Primer MVP: bóveda, libros diarios, editor, lienzo, búsqueda, exportación y plugins.</p>
+        <p>Folio 1.0: bóveda cifrable, libros diarios, editor, lienzo, PDF, búsqueda, exportación y plugins.</p>
       </description>
     </release>
   </releases>

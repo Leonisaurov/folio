@@ -45,7 +45,7 @@ dist/folio_<versión>_<arquitectura>.deb
 ## 4. Verificación manual en VM limpia
 
 ```bash
-sudo dpkg -i dist/folio_0.1.0_amd64.deb
+sudo dpkg -i dist/folio_1.0.0_amd64.deb
 folio --version
 folio vault init ~/Notas
 flatpak run io.github.leonisauro.Folio --version  # si se publica Flatpak

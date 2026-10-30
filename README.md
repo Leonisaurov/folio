@@ -4,8 +4,11 @@
 local primero, con un editor híbrido entre documento lineal y lienzo infinito, y
 plugins aislados con UI declarativa.
 
-> Estado: **MVP 0.1.0 implementado** (etapas E0–E13, con las limitaciones
-> documentadas en [docs/09](docs/09-hoja-de-ruta.md#17-estado-de-avance)).
+> Estado: **1.0.0 release candidate generada** (E0–E13 y semanas 15–20;
+> artefactos y checksums creados). La firma, la beta real de 30 días, la VM limpia
+> Flatpak/AUR, la revisión con lector de pantalla y el runtime WASM de terceros
+> siguen siendo bloqueos humanos/decisiones documentados en
+> [docs/09](docs/09-hoja-de-ruta.md#17-estado-de-avance) y [docs/21](docs/21-release-1.0.md).
 > Binario: `folio`. ID de aplicación: `io.github.leonisauro.Folio`.
 >
 > Licencia de la app: GPL-3.0-or-later. SDK de plugins: MIT OR Apache-2.0.
@@ -123,7 +126,7 @@ medición y su entorno.
 | Accesibilidad | [docs/18-accesibilidad.md](docs/18-accesibilidad.md) |
 | Empaquetado .deb | [docs/19-empaquetado.md](docs/19-empaquetado.md) |
 | Beta de 30 días | [docs/20-beta-30-dias.md](docs/20-beta-30-dias.md) |
-| Release 1.0 | [docs/21-release-1.0.md](docs/21-release-1.0.md) |
+| Release 1.0 | [docs/21-release-1.0.md](docs/21-release-1.0.md) y [notas 1.0.0](docs/22-release-notes-1.0.0.md) |
 | Automatización aislada | [docs/15-automatizacion.md](docs/15-automatizacion.md) |
 
 Resumen ejecutivo del plan: [PLAN.md](PLAN.md).

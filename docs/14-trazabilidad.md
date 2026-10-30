@@ -198,6 +198,16 @@ Cada requisito del producto tiene una etapa que lo construye y una prueba que lo
 | RNF-18…RNF-20 recuperación | `cargo test -p folio-store backup trash versions`, `scripts/chaos.sh` |
 | RNF-21…RNF-22 aislamiento | `scripts/automation/ui.sh` (Xvfb privado), `keep-awake.sh` |
 
+### 9.5 Release 1.0.0 (semana 20)
+
+| Requisito | Evidencia |
+|---|---|
+| Versión congelada | `Cargo.toml` 1.0.0; `Cargo.lock` |
+| Tarball y checksum | `dist/folio-1.0.0-linux-x86_64.tar.gz` + `.sha256` |
+| `.deb` verificado | `dist/folio_1.0.0_amd64.deb`; extracción, `--version` y AppStream |
+| Manifiesto de gates/bloqueos | `dist/RELEASE-1.0.0.md`, `docs/22-release-notes-1.0.0.md` |
+| Firma/publicación | Pendiente de clave GPG; artefacto marcado SIN FIRMA |
+
 ### 9.4 Beta de 30 días (1.0, semana 19)
 
 | Requisito | Evidencia |

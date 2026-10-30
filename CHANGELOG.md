@@ -2,7 +2,14 @@
 
 Todas las fechas en formato ISO 8601. Este proyecto sigue [SemVer](https://semver.org/).
 
-## [1.0.0] — en curso
+## [1.0.0] — 2026-10-29 (release candidate)
+
+### Semana 20 — release 1.0.0
+
+- Versión congelada a `1.0.0`; artefactos `release.sh`, `.deb` y checksums.
+- Manifiesto de release con gates y bloqueos humanos documentados.
+- Firma GPG opcional; sin clave, el artefacto queda sin firma y la release no se
+  declara publicada.
 
 ### Semana 19 — beta de 30 días
 
