@@ -1,5 +1,10 @@
 # Beta pública en GitHub
 
+## Release actual
+
+- Beta: https://github.com/Leonisaurov/folio/releases/tag/v1.0.0-beta.1
+- Invitación y feedback: https://github.com/Leonisaurov/folio/issues/1
+
 ## Invitación
 
 Gracias por probar Folio. La beta es **local primero y sin telemetría**: no se envía

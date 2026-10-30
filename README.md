@@ -4,14 +4,17 @@
 local primero, con un editor híbrido entre documento lineal y lienzo infinito, y
 plugins aislados con UI declarativa.
 
-> Estado: **1.0.0 release candidate firmada, no publicada** (E0–E13 y semanas
-> 15–20; artefactos, checksums y firmas generados). La beta real de 30 días, la
-> VM limpia Flatpak/AUR, la revisión con lector de pantalla y la publicación
-> siguen pendientes; el runtime WASM de terceros ya está implementado. Detalle en
+> Estado: **beta 1.0.0 publicada y firmada**; el release final `v1.0.0` espera el
+> cierre de los 30 días de beta, la validación Flatpak/AUR y la revisión manual con
+> lector de pantalla. Los artefactos, checksums y firmas están generados y el
+> runtime WASM de terceros está implementado. Detalle en
 > [docs/09](docs/09-hoja-de-ruta.md#17-estado-de-avance) y [docs/21](docs/21-release-1.0.md).
 > Binario: `folio`. ID de aplicación: `io.github.leonisauro.Folio`.
 >
 > Licencia de la app: GPL-3.0-or-later. SDK de plugins: MIT OR Apache-2.0.
+>
+> Beta: https://github.com/Leonisaurov/folio/releases/tag/v1.0.0-beta.1
+> Invitación: https://github.com/Leonisaurov/folio/issues/1
 
 ## Qué funciona hoy
 

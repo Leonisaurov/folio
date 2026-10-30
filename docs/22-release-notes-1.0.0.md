@@ -29,7 +29,7 @@ dist/beta/0.1.0/          # canal beta preparado en la semana 19
 
 ## Estado de la release
 
-**No publicada aún.** Faltan, por depender de personas/entorno:
+**Beta publicada** en `v1.0.0-beta.1`; el release final `v1.0.0` aún no. Faltan:
 
 1. [x] Firma GPG generada y aplicada a todos los artefactos.
 2. Beta real de 30 días con testers; el canal y checklist están listos.

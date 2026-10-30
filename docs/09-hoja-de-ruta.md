@@ -939,7 +939,7 @@ Fecha de cierre del MVP: **2026-10-29**. Estado verificado con
 | 16 | Cifrado de bóveda | Implementado | `crates/folio-store/tests/encryption.rs`; `folio vault init --encrypt`; bloqueo/desbloqueo GUI |
 | 17 | PDF y plugins 4–5 | Implementado | `folio export --format pdf`; `crates/folio-render/tests/pdf_golden.rs`; 5 plugins de referencia |
 | 18 | Accesibilidad y `.deb` | Implementado | `scripts/a11y.sh`; `scripts/build-deb.sh`; `.deb` verificado en árbol temporal |
-| 19 | Cierre de beta | Canal preparado; invitación GitHub | `scripts/beta.sh`; `.github/workflows/beta.yml`; `docs/20` y `docs/23` |
+| 19 | Cierre de beta | Beta 1.0.0 publicada | `v1.0.0-beta.1`; issue #1; 30 días en curso |
 | 20 | Release 1.0 | RC firmado, no publicado | `release.sh`, `build-deb.sh`, `sign-artifacts.sh`, `dist/RELEASE-1.0.0.md` |
 
 La vista viva usa `NetworkSession` efímera, deniega todos los permisos, cancela
