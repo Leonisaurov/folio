@@ -4,10 +4,10 @@
 local primero, con un editor híbrido entre documento lineal y lienzo infinito, y
 plugins aislados con UI declarativa.
 
-> Estado: **1.0.0 release candidate generada** (E0–E13 y semanas 15–20;
-> artefactos y checksums creados). La firma, la beta real de 30 días, la VM limpia
-> Flatpak/AUR, la revisión con lector de pantalla y el runtime WASM de terceros
-> siguen siendo bloqueos humanos/decisiones documentados en
+> Estado: **1.0.0 release candidate firmada, no publicada** (E0–E13 y semanas
+> 15–20; artefactos, checksums y firmas generados). La beta real de 30 días, la
+> VM limpia Flatpak/AUR, la revisión con lector de pantalla y la publicación
+> siguen pendientes; el runtime WASM de terceros ya está implementado. Detalle en
 > [docs/09](docs/09-hoja-de-ruta.md#17-estado-de-avance) y [docs/21](docs/21-release-1.0.md).
 > Binario: `folio`. ID de aplicación: `io.github.leonisauro.Folio`.
 >

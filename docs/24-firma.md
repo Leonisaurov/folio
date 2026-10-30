@@ -34,6 +34,26 @@ gpg --list-secret-keys --keyid-format=long
 # copia la huella de 40 hex de la línea "fpr" (o el key id largo)
 ```
 
+## Clave de release de este proyecto
+
+Huella pública:
+
+```text
+18615FBFBDFAE2E51866B5AB554741526478CD4A
+Leonisaurov <leonisaurov@gmail.com>
+```
+
+La clave pública está en `keys/folio-release-key.asc`. La clave privada está en el
+GPG keyring del usuario, no en el repositorio.
+
+> **Importante**: esta clave se generó sin passphrase para poder firmar el RC en
+> este entorno. Añade una passphrase antes de publicar:
+>
+> ```bash
+> gpg --edit-key 18615FBFBDFAE2E51866B5AB554741526478CD4A
+> # passwd, guarda y sal
+> ```
+
 ## 3. Crear una clave sin contraseña (solo CI/pruebas)
 
 No la uses para una release pública. En un `GNUPGHOME` aislado:
@@ -99,7 +119,7 @@ gpg --verify dist/folio-1.0.0-linux-x86_64.tar.gz.asc \
              dist/folio-1.0.0-linux-x86_64.tar.gz
 gpg --verify dist/folio_1.0.0_amd64.deb.asc dist/folio_1.0.0_amd64.deb
 gpg --verify dist/SHA256SUMS.asc dist/SHA256SUMS
-sha256sum -c dist/SHA256SUMS
+( cd dist && sha256sum -c SHA256SUMS )
 ```
 
 Si `gpg --verify` dice «Good signature» y la huella coincide con la publicada,

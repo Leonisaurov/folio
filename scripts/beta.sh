@@ -22,6 +22,7 @@ cp "$DEB" "$CHANNEL_DIR/"
 cp "$ROOT/dist/beta-check.txt" "$CHANNEL_DIR/REPORT.txt"
 cp "$ROOT/docs/20-beta-30-dias.md" "$CHANNEL_DIR/CHECKLIST.md"
 cp "$ROOT/docs/23-beta-github.md" "$CHANNEL_DIR/GITHUB-BETA.md"
+cp "$ROOT/keys/folio-release-key.asc" "$CHANNEL_DIR/folio-release-key.asc"
 
 log "Empaquetando binarios y checksums"
 FEATURE_ARGS=()
@@ -45,5 +46,10 @@ cat >"$CHANNEL_DIR/CHANNEL.json" <<EOF
   ]
 }
 EOF
+if [[ -n "${FOLIO_SIGNING_KEY:-}" ]] && have gpg; then
+    "$SCRIPT_DIR/sign-artifacts.sh"
+else
+    warn "Beta SIN FIRMA: define FOLIO_SIGNING_KEY para firmar los artefactos."
+fi
 log "Canal beta preparado en $CHANNEL_DIR"
 ls -lh "$CHANNEL_DIR"

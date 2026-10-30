@@ -44,12 +44,23 @@ SHA_ARCH=""
 if [[ -n "$ARCH_PKG" ]]; then
     SHA_ARCH="$(sha256sum "$ARCH_PKG" | cut -d' ' -f1)"
 fi
+SIGNED="sin firma"
+SIGNER=""
+if [[ -f "$TAR.asc" && -f "$DEB.asc" ]] && have gpg; then
+    SIGNER="$(gpg --status-fd 1 --verify "$TAR.asc" "$TAR" 2>/dev/null | awk '/VALIDSIG/{print $3; exit}')"
+    if [[ -n "$SIGNER" ]]; then SIGNED="firmada"; fi
+fi
+if [[ "$SIGNED" == "firmada" ]]; then
+    SIG_LINE="- [x] **Firma GPG**: verificada con la clave \`$SIGNER\`."
+else
+    SIG_LINE="- [ ] **Firma GPG**: falta \`FOLIO_SIGNING_KEY\`; el artefacto no está firmado."
+fi
 MANIFEST="$DIST/RELEASE-$VERSION.md"
 cat >"$MANIFEST" <<EOF
 # Folio $VERSION — manifiesto de release
 
 **Fecha**: $(date -u +%Y-%m-%dT%H:%M:%SZ)
-**Canal**: release candidate (sin firma)
+**Canal**: release candidate ($SIGNED)
 **Arquitectura**: $ARCH
 
 ## Artefactos
@@ -78,8 +89,7 @@ Verificación ejecutada:
 
 ## Bloqueos humanos / decisiones pendientes
 
-- [ ] **Firma GPG**: no hay \`FOLIO_SIGNING_KEY\` en este entorno. El artefacto
-  queda sin firma; no se declara publicado.
+$SIG_LINE
 - [ ] **Beta de 30 días con testers reales**: el canal y el checklist están listos,
   pero no se ha ejecutado el periodo.
 - [x] **Debian y pacman**: instalados y verificados en contenedores limpios
@@ -94,12 +104,11 @@ Verificación ejecutada:
 
 ## Cómo continuar
 
-1. Aportar la clave de firma y ejecutar
-   \`FOLIO_SIGNING_KEY=<huella> ./scripts/release.sh\`.
+1. Publicar los artefactos firmados y el tag \`v$VERSION\`.
 2. Distribuir \`dist/beta/$VERSION/\` y completar los 30 días.
 3. Publicar y validar Flatpak/AUR en una VM de escritorio limpia.
 4. Completar la revisión con lector de pantalla.
-5. Decidir el runtime WASM y publicar el tag \`v$VERSION\`.
+5. Verificar \`gpg --verify\` y \`sha256sum -c\` antes de anunciar.
 EOF
 cp "$MANIFEST" "$DIST/RELEASE.md"
 sed -n '1,45p' "$MANIFEST"

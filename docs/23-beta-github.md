@@ -15,8 +15,9 @@ elige:
 - **Arch/pacman**: `folio-1.0.0-1-x86_64.pkg.tar.zst` (o compila con `PKGBUILD`)
 - **Cualquier Linux x86_64**: `folio-1.0.0-linux-x86_64.tar.gz`
 
-Comprueba `SHA256SUMS` antes de instalar. Los artefactos de la beta pueden no estar
-firmados; no los instales si tu política exige firma.
+Comprueba `SHA256SUMS` antes de instalar. La beta incluye
+`folio-release-key.asc` y firmas `.asc`; verifica con `gpg --verify` si tu política
+exige firma.
 
 ## Qué probar durante 30 días
 

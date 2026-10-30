@@ -21,11 +21,15 @@ FILES=$(find "$ROOT/dist" -maxdepth 2 -type f \
 [[ -n "$FILES" ]] || die "No hay artefactos; ejecuta release.sh y build-deb.sh."
 
 log "Firmando $VERSION con $KEY"
-while IFS= read -r file; do
-    [[ -n "$file" ]] || continue
+sign_one() {
+    local file="$1"
     gpg --yes --armor --detach-sign --local-user "$KEY" "$file"
     gpg --verify "$file.asc" "$file" >/dev/null
     log "OK $(basename "$file").asc"
+}
+while IFS= read -r file; do
+    [[ -n "$file" ]] || continue
+    sign_one "$file"
 done <<<"$FILES"
 
 ( cd "$ROOT/dist" && sha256sum $(find . -maxdepth 2 -type f \
@@ -33,7 +37,13 @@ done <<<"$FILES"
        -o -name "folio_${VERSION}_*.deb" \
        -o -name "folio-${VERSION}-*.pkg.tar.zst" \
        -o -name "RELEASE-$VERSION.md" \) -print | sed 's#^\./##' | sort) >SHA256SUMS )
-gpg --yes --armor --detach-sign --local-user "$KEY" "$ROOT/dist/SHA256SUMS"
-gpg --verify "$ROOT/dist/SHA256SUMS.asc" "$ROOT/dist/SHA256SUMS" >/dev/null
+sign_one "$ROOT/dist/SHA256SUMS"
+# Firmar también el canal beta si existe.
+for beta_dir in "$ROOT"/dist/beta/*; do
+    [[ -d "$beta_dir" ]] || continue
+    for file in "$beta_dir"/*.deb "$beta_dir"/*.tar.gz "$beta_dir"/SHA256SUMS "$beta_dir"/CHANNEL.json; do
+        [[ -f "$file" ]] && sign_one "$file"
+    done
+done
 log "Firmas y SHA256SUMS listos en dist/"
 log "Clave pública: gpg --armor --export $KEY > folio-release-key.asc"

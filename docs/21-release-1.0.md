@@ -22,8 +22,9 @@ Ejecutado en el entorno de desarrollo:
 ```text
 ./scripts/automation/all.sh   → OK
 ./scripts/beta-check.sh       → BETA-CHECK OK
-./scripts/release.sh          → tarball 1.0.0 + checksum, sin firma
-./scripts/build-deb.sh        → .deb 1.0.0 verificado, sin firma
+./scripts/release.sh          → tarball 1.0.0 + checksum
+./scripts/build-deb.sh        → .deb 1.0.0 verificado
+./scripts/sign-artifacts.sh   → tarball, .deb, pacman, manifiesto y SHA256SUMS firmados
 ./scripts/build-arch.sh       → paquete pacman 1.0.0 verificado
 ./scripts/release-manifest.sh → dist/RELEASE-1.0.0.md
 ./scripts/a11y.sh             → OK
@@ -32,8 +33,8 @@ Ubuntu 24.04 (Docker)         → .deb instalado, folio 1.0.0
 Arch Linux (Docker)           → pacman instalado, folio 1.0.0
 ```
 
-Artefactos en `dist/`; checksums en el manifiesto. El release queda en estado
-**RC no publicado** hasta completar los bloqueos humanos de la sección 6.
+Artefactos en `dist/`; checksums y firmas en el manifiesto. El release queda en
+estado **RC firmado, no publicado** hasta completar los bloqueos humanos.
 
 ## 4. Artefactos
 
@@ -57,7 +58,7 @@ Artefactos en `dist/`; checksums en el manifiesto. El release queda en estado
 
 ## 5. Publicación
 
-- [ ] Tag `v1.0.0` firmado.
+- [ ] Tag `v1.0.0` firmado y publicado.
 - [ ] Flatpak, AUR y `.deb` publicados.
 - [ ] `SHA256SUMS` y firma adjuntas.
 - [ ] Release notes con cambios, límites y recuperación.

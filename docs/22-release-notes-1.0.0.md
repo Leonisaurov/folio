@@ -1,7 +1,7 @@
 # Folio 1.0.0 — release candidate
 
 **Fecha**: 2026-10-29
-**Canal**: release candidate, **sin firma** en este entorno
+**Canal**: release candidate **firmada** (clave `18615FBFBDFAE2E51866B5AB554741526478CD4A`)
 **Arquitectura**: x86_64
 
 ## Qué incluye
@@ -29,9 +29,9 @@ dist/beta/0.1.0/          # canal beta preparado en la semana 19
 
 ## Estado de la release
 
-**No publicada.** Faltan, por depender de personas/entorno:
+**No publicada aún.** Faltan, por depender de personas/entorno:
 
-1. Firma GPG con `FOLIO_SIGNING_KEY` (no hay clave en este entorno).
+1. [x] Firma GPG generada y aplicada a todos los artefactos.
 2. Beta real de 30 días con testers; el canal y checklist están listos.
 3. Publicación Flatpak/AUR en una VM limpia; `.deb` y pacman ya se instalaron y
    verificaron en contenedores limpios.

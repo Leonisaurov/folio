@@ -929,7 +929,7 @@ Fecha de cierre del MVP: **2026-10-29**. Estado verificado con
 | E10 | Implementado | 2026-10-29 | Manifiestos, permisos, firma, límites, 5 ejemplos y runtime WASM de terceros (ABI JSON, wasmi); WIT queda como contrato documental |
 | E11 | Implementado | 2026-10-29 | Backups verificables, restore, papelera, versiones, `doctor`, caos |
 | E12 | Implementado (auditoría automatizada) | 2026-10-29 | Foco, etiquetas, escala 200 %, contraste, alternativa al lienzo; revisión manual con lector de pantalla pendiente |
-| E13 | Implementado (parcial) | 2026-10-29 | Manifiestos Flatpak/AUR, AppStream, `.deb`, pacman, canal beta y artefactos 1.0.0; Flatpak/AUR publicado y firma pendientes |
+| E13 | Implementado (parcial) | 2026-10-29 | Manifiestos Flatpak/AUR, AppStream, `.deb`, pacman, canal beta y artefactos 1.0.0 firmados; Flatpak/AUR publicado pendiente |
 
 ### 17.1 1.0 en curso
 
@@ -940,7 +940,7 @@ Fecha de cierre del MVP: **2026-10-29**. Estado verificado con
 | 17 | PDF y plugins 4–5 | Implementado | `folio export --format pdf`; `crates/folio-render/tests/pdf_golden.rs`; 5 plugins de referencia |
 | 18 | Accesibilidad y `.deb` | Implementado | `scripts/a11y.sh`; `scripts/build-deb.sh`; `.deb` verificado en árbol temporal |
 | 19 | Cierre de beta | Canal preparado; invitación GitHub | `scripts/beta.sh`; `.github/workflows/beta.yml`; `docs/20` y `docs/23` |
-| 20 | Release 1.0 | Artefactos RC generados; firma pendiente | `release.sh`, `build-deb.sh`, `sign-artifacts.sh`, `dist/RELEASE-1.0.0.md` |
+| 20 | Release 1.0 | RC firmado, no publicado | `release.sh`, `build-deb.sh`, `sign-artifacts.sh`, `dist/RELEASE-1.0.0.md` |
 
 La vista viva usa `NetworkSession` efímera, deniega todos los permisos, cancela
 descargas, no persiste cookies ni almacenamiento local y termina el proceso web al
