@@ -51,6 +51,7 @@ jobs:
           sudo apt-get install -y \
             libgtk-4-dev libadwaita-1-dev \
             libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            libsoup-3.0-dev libwebkitgtk-6.0-dev \
             poppler-utils xvfb dbus-x11 appstream desktop-file-utils
 
       - name: Cache de Cargo
