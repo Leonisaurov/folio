@@ -216,3 +216,12 @@ Buenas prácticas:
 - [ ] `keep-awake.sh` bloquea la suspensión y permite apagar la pantalla.
 - [ ] `nightly.sh` deja log en `.artifacts/` y termina con el código de la suite.
 - [ ] Un test que use `sleep` o `~/Notas` se rechaza en revisión.
+
+
+### 9.1 WebKit en CI
+
+GitHub Actions puede bloquear `bwrap`/user namespaces. En ese caso el job de
+WebKit define `FOLIO_TEST_NO_WEBKIT_SANDBOX=1`; el test sigue verificando perfil
+efímero, cookies, storage, WebGL y permisos, pero el sandbox del proceso web se
+valida en local con `scripts/webkit.sh` (sin esa variable). No se usa esta opción
+en la app distribuida.

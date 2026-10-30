@@ -69,6 +69,11 @@ jobs:
 
       - name: Vista web viva (WebKitGTK 6.0)
         if: steps.cargo.outputs.exists == 'yes'
+        env:
+          # GitHub Actions bloquea user namespaces de bwrap; el sandbox real se
+          # verifica en local. El resto del aislamiento (perfil efímero, cookies,
+          # storage, WebGL, permisos) se sigue comprobando aquí.
+          FOLIO_TEST_NO_WEBKIT_SANDBOX: "1"
         run: |
           sudo apt-get install -y libwebkitgtk-6.0-dev
           ./scripts/webkit.sh
