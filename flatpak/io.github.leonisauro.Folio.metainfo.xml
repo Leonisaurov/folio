@@ -29,7 +29,7 @@
   </description>
   <launchable type="desktop-id">io.github.leonisauro.Folio.desktop</launchable>
   <!-- TODO(publicación): sustituir por la URL real del proyecto. -->
-  <url type="homepage">https://github.com</url>
+  <url type="homepage">https://github.com/Leonisaurov/folio</url>
   <developer id="io.github.leonisauro">
     <name>Folio contributors</name>
   </developer>

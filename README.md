@@ -129,6 +129,7 @@ medición y su entorno.
 | Empaquetado .deb | [docs/19-empaquetado.md](docs/19-empaquetado.md) |
 | Beta de 30 días | [docs/20-beta-30-dias.md](docs/20-beta-30-dias.md) |
 | Probar la beta en GitHub | [docs/23-beta-github.md](docs/23-beta-github.md) |
+| Repositorio | https://github.com/Leonisaurov/folio |
 | Release 1.0 | [docs/21-release-1.0.md](docs/21-release-1.0.md) y [notas 1.0.0](docs/22-release-notes-1.0.0.md) |
 | Crear clave GPG y firmar | [docs/24-firma.md](docs/24-firma.md) |
 | Automatización aislada | [docs/15-automatizacion.md](docs/15-automatizacion.md) |

@@ -2,9 +2,6 @@ name: Beta release
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "v*-beta*"
 
 permissions:
   contents: write
@@ -24,7 +21,18 @@ jobs:
             libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
             libwebkitgtk-6.0-dev poppler-utils xvfb dbus-x11 appstream \
             desktop-file-utils zstd
+      - name: Importar clave de firma (si existe)
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: |
+          if [[ -n "$GPG_PRIVATE_KEY" ]]; then
+            echo "$GPG_PRIVATE_KEY" | gpg --batch --import
+          else
+            echo "Sin GPG_PRIVATE_KEY: la beta se generará sin firma."
+          fi
       - name: Preparar beta
+        env:
+          FOLIO_SIGNING_KEY: ${{ secrets.GPG_FINGERPRINT }}
         run: ./scripts/beta.sh
       - name: Publicar pre-release
         uses: softprops/action-gh-release@v2
