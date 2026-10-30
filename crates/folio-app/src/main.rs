@@ -777,6 +777,13 @@ fn dispatch(
                         public_key.as_deref(),
                         &clock.now_rfc3339(),
                     )?;
+                    let manifest = folio_plugins::manifest::load_file(&path.join("manifest.toml"))?;
+                    let wasm = std::fs::read(path.join(&manifest.entry))?;
+                    folio_plugins::wasm::WasmRuntime::new(
+                        wasm,
+                        folio_plugins::runtime::SandboxLimits::default(),
+                    )
+                    .validate_module()?;
                     println!("{} {}", installed.id, installed.version);
                 }
                 PluginCommand::Uninstall { id } => {
@@ -795,8 +802,28 @@ fn dispatch(
                 }
                 PluginCommand::Test { path } => {
                     let manifest = folio_plugins::manifest::load_file(&path.join("manifest.toml"))?;
-                    let mut runtime = folio_plugins::runtime::BuiltinRuntime::default();
-                    let context = registry.context(&manifest.id, 64, 2000);
+                    let limits = folio_plugins::runtime::SandboxLimits {
+                        memory_limit_mb: config.int("plugins.max_memory_mb").max(8) as u32,
+                        timeout: std::time::Duration::from_millis(
+                            config.int("plugins.timeout_ms").max(10) as u64,
+                        ),
+                        max_state_bytes: 1024 * 1024,
+                        fuel: config.int("plugins.max_fuel").max(1) as u64,
+                    };
+                    let context = registry.context(
+                        &manifest.id,
+                        limits.memory_limit_mb,
+                        limits.timeout.as_millis() as u32,
+                    );
+                    let mut runtime: Box<dyn PluginRuntime> =
+                        if folio_plugins::builtin::manifest_for(&manifest.id).is_some() {
+                            Box::new(folio_plugins::runtime::BuiltinRuntime { limits })
+                        } else {
+                            Box::new(folio_plugins::wasm::WasmRuntime::from_file(
+                                &path.join(&manifest.entry),
+                                limits,
+                            )?)
+                        };
                     let response = runtime.call(
                         &manifest,
                         &folio_plugin_sdk::Request {

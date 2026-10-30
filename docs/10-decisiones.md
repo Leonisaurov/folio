@@ -613,6 +613,34 @@ crash reporting remoto (rechazado); beta solo interna (no valida uso real).
 
 ---
 
+## ADR-033 — Runtime WASM de terceros: ABI JSON sobre wasmi
+
+**Fecha**: 2026-10-29
+**Estado**: aceptada para 1.0
+
+**Contexto**: el contrato de UI y el ciclo de vida ya estaban congelados, pero
+faltaba ejecutar módulos de terceros. Wasmtime/Component Model añade peso y
+complejidad de empaquetado; el plan permitía un ABI JSON como Plan B.
+
+**Decisión**: añadir `folio_plugins::wasm::WasmRuntime` sobre **wasmi** (intérprete
+puro Rust, sin WASI). El módulo exporta `folio_api_version`, `folio_alloc`,
+`folio_handle`, `folio_result_ptr`, `folio_result_len` y `memory`; la petición y
+la respuesta son JSON con el contrato `api = 1`. Cada llamada crea Store e
+instancia nuevos, limita memoria (64 MB por defecto), fuel, tamaño de estado y
+valida la UI. Las funciones de host consultan `HostContext`; sin permiso de red no
+se concede. Los plugins de referencia siguen usando el runtime Rust equivalente.
+
+**Consecuencias**:
+- Plugins de terceros funcionan sin WASI ni acceso ambiental.
+- El binario base no incluye Wasmtime; wasmi es una dependencia pequeña.
+- El WIT sigue documentado como contrato de migración futura.
+- Un plugin que trapa o agota fuel se convierte en error aislado; la app sigue.
+
+**Alternativas**: Wasmtime+WIT (más fidelidad, más peso); solo builtins (rechazado
+para 1.0); ABI binario propietario (peor portabilidad).
+
+---
+
 ## Plantilla para nuevas ADR
 
 ```markdown

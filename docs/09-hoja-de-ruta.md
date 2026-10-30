@@ -926,7 +926,7 @@ Fecha de cierre del MVP: **2026-10-29**. Estado verificado con
 | E7 | Implementado | 2026-10-29 | Assets BLAKE3, imagen/audio/vídeo/archivo, web card offline |
 | E8 | Implementado | 2026-10-29 | Tabla editable/CSV y dibujo vectorial con export SVG en HTML |
 | E9 | Implementado | 2026-10-29 | FTS5, previsualización, golden de render, importación MD |
-| E10 | Implementado (parcial) | 2026-10-29 | Manifiestos, permisos, firma, límites y 5 ejemplos; runtime WASM de terceros en 1.0 (ADR-023) |
+| E10 | Implementado | 2026-10-29 | Manifiestos, permisos, firma, límites, 5 ejemplos y runtime WASM de terceros (ABI JSON, wasmi); WIT queda como contrato documental |
 | E11 | Implementado | 2026-10-29 | Backups verificables, restore, papelera, versiones, `doctor`, caos |
 | E12 | Implementado (auditoría automatizada) | 2026-10-29 | Foco, etiquetas, escala 200 %, contraste, alternativa al lienzo; revisión manual con lector de pantalla pendiente |
 | E13 | Implementado (parcial) | 2026-10-29 | Manifiestos Flatpak/AUR, AppStream, `.deb`, canal beta, checklist de 30 días y artefactos 1.0.0; build Flatpak/AUR en VM limpia y firma pendientes |
@@ -953,9 +953,10 @@ Estas desviaciones están registradas como ADR en `docs/10` y no cambian el
 formato de datos:
 
 1. **Runtime de plugins**: el contrato (`Manifest` + `Request`/`Response` +
-   `UiNode`) y los cinco ejemplos funcionan, pero los ejemplos se ejecutan con el
-   runtime de referencia en Rust. El cargador Wasmtime/WIT de terceros queda para
-   1.0 (ADR-023). Los paquetes ya incluyen manifiesto y `.wasm` de marcador.
+   `UiNode`) se ejecuta tanto en los cinco plugins de referencia como en módulos
+   WASM de terceros mediante el ABI JSON sobre **wasmi**, con fuel, límites de
+   memoria, permisos y aislamiento (ADR-033). El WIT/Component Model queda como
+   contrato documental para una futura migración, no como requisito del ABI actual.
 2. **Zoom del lienzo**: las posiciones y tamaños escalan y la edición funciona en
    el lienzo, pero la tipografía de widgets GTK no se re-rasteriza con el zoom en
    el MVP. El refinado visual del zoom queda para 1.0.
@@ -977,6 +978,9 @@ formato de datos:
    escalada; los plugins y la web se dibujan como tarjetas estáticas, no como
    capturas interactivas. La rasterización exacta de plugins queda como refinamiento
    de 1.0.
+7. **Runtime de plugins**: el ABI JSON/wasmi es el contrato ejecutable de 1.0; el
+   WIT/Component Model queda documentado para una migración futura, no se exige
+   para publicar la 1.0.
 
 Actualizar esta tabla al cerrar cada puerta. Es la única fuente de verdad del progreso.
 

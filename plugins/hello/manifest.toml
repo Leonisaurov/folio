@@ -1,0 +1,16 @@
+id = "io.github.example.hello"
+name = "Hello WASM"
+version = "1.0.0"
+description = "Plugin de terceros mínimo: ABI api=1, UI declarativa y sin red."
+api = 1
+entry = "plugin.wasm"
+permissions = ["write_own_block"]
+
+[[blocks]]
+id = "hello"
+name = "Hello"
+default_height = 120.0
+
+[[commands]]
+id = "render"
+name = "Renderizar"

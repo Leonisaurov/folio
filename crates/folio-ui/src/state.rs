@@ -3,9 +3,10 @@ use std::path::{Path, PathBuf};
 use folio_config::Config;
 use folio_core::{Block, FolioError, Note, SystemClock, UndoStack, model::TextContent};
 use folio_daily::DailyConfig;
+use folio_plugin_sdk::{Manifest, Request, Response};
 use folio_plugins::registry::Registry;
-use folio_plugins::runtime::{BuiltinRuntime, PluginRuntime};
-use folio_plugins::{PluginError, builtin};
+use folio_plugins::runtime::{BuiltinRuntime, PluginRuntime, SandboxLimits};
+use folio_plugins::{PluginError, builtin, manifest};
 use folio_store::{Book, Index, MovePosition, Store};
 
 use crate::helpers;
@@ -29,7 +30,6 @@ pub struct AppState {
     pub mode: ViewMode,
     pub canvas_scale: f64,
     pub search: String,
-    pub runtime: BuiltinRuntime,
     pub config_error: Option<String>,
     pub last_message: Option<String>,
     pub locked: bool,
@@ -70,7 +70,6 @@ impl AppState {
             mode,
             canvas_scale,
             search: String::new(),
-            runtime: BuiltinRuntime::default(),
             config_error: None,
             last_message: None,
             locked: false,
@@ -458,6 +457,46 @@ impl AppState {
         Ok(())
     }
 
+    pub fn plugin_manifest(&self, id: &str) -> Result<Manifest, PluginError> {
+        if let Some(manifest) = builtin::manifest_for(id) {
+            return Ok(manifest);
+        }
+        let path = self
+            .store
+            .root()
+            .join("plugins")
+            .join(id)
+            .join("manifest.toml");
+        manifest::load_file(&path)
+    }
+
+    /// Ejecuta un plugin instalado o de referencia sin mutar la nota.
+    pub fn plugin_run(&self, id: &str, request: &Request) -> Result<Response, PluginError> {
+        let manifest = self.plugin_manifest(id)?;
+        let memory = self.config.int("plugins.max_memory_mb").max(8) as u32;
+        let timeout = self.config.int("plugins.timeout_ms").max(10) as u32;
+        let fuel = self.config.int("plugins.max_fuel").max(1) as u64;
+        let context = self.registry.context(id, memory, timeout);
+        let limits = SandboxLimits {
+            memory_limit_mb: memory,
+            timeout: std::time::Duration::from_millis(timeout as u64),
+            max_state_bytes: 1024 * 1024,
+            fuel,
+        };
+        if builtin::manifest_for(id).is_some() {
+            let mut runtime = BuiltinRuntime { limits };
+            runtime.call(&manifest, request, &context)
+        } else {
+            if !self.registry.enabled(id) {
+                return Err(PluginError::NotFound(format!("{id} desactivado")));
+            }
+            let path = folio_plugins::registry::Registry::package_dir(self.store.root(), id)
+                .join(&manifest.entry);
+            let mut runtime = folio_plugins::wasm::WasmRuntime::from_file(&path, limits)?;
+            runtime.call(&manifest, request, &context)
+        }
+    }
+
     pub fn plugin_command(
         &mut self,
         block_id: &str,
@@ -479,19 +518,13 @@ impl AppState {
                 _ => return Err(PluginError::NotFound(block_id.into())),
             }
         };
-        let manifest = builtin::manifest_for(&plugin_id)
-            .ok_or_else(|| PluginError::NotFound(plugin_id.clone()))?;
-        let memory = self.config.int("plugins.max_memory_mb").max(8) as u32;
-        let timeout = self.config.int("plugins.timeout_ms").max(10) as u32;
-        let context = self.registry.context(&plugin_id, memory, timeout);
-        let response = self.runtime.call(
-            &manifest,
+        let response = self.plugin_run(
+            &plugin_id,
             &folio_plugin_sdk::Request {
                 command: command.to_string(),
                 block_state: state,
                 payload,
             },
-            &context,
         )?;
         if let Some(note) = self.current_note.as_mut()
             && let Some(block) = note.block_mut(block_id)

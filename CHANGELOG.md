@@ -4,6 +4,13 @@ Todas las fechas en formato ISO 8601. Este proyecto sigue [SemVer](https://semve
 
 ## [1.0.0] — 2026-10-29 (release candidate)
 
+### Runtime WASM de terceros
+
+- `WasmRuntime` sobre wasmi con ABI JSON api=1, fuel, memoria y tiempo limitados.
+- Plugins de terceros instalables/ejecutables; ejemplo `plugins/hello`.
+- Sandbox: bucles infinitos, traps, memoria y UI inválida aislados.
+
+
 ### Semana 20 — release 1.0.0
 
 - Versión congelada a `1.0.0`; artefactos `release.sh`, `.deb` y checksums.

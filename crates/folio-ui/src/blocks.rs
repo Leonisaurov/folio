@@ -5,7 +5,6 @@ use folio_core::model::{
 };
 use folio_core::{Block, Placement};
 use folio_plugin_sdk::{ChartKind, LabelStyle, UiNode};
-use folio_plugins::runtime::PluginRuntime;
 use gtk::gdk;
 use gtk::prelude::*;
 
@@ -875,48 +874,38 @@ fn parse_color(hex: &str) -> (f64, f64, f64) {
 }
 
 fn render_plugin(app: &Rc<App>, block: &Block, plugin: &PluginContent) -> gtk::Widget {
-    let manifest = folio_plugins::builtin::manifest_for(&plugin.plugin);
     let container = gtk::Box::new(gtk::Orientation::Vertical, 8);
     container.add_css_class("plugin-block");
-    match manifest {
-        None => {
+    let response = {
+        let state = app.state.borrow();
+        state.plugin_run(
+            &plugin.plugin,
+            &folio_plugin_sdk::Request {
+                command: "render".into(),
+                block_state: plugin.state.clone(),
+                payload: serde_json::Value::Null,
+            },
+        )
+    };
+    match response {
+        Ok(response) => {
+            container.append(&render_ui_node(app, block, &response.ui));
+        }
+        Err(folio_plugins::PluginError::NotFound(_)) => {
             let label = gtk::Label::new(Some(&format!(
                 "Plugin «{}» no instalado. El contenido se conserva.",
                 plugin.plugin
             )));
             label.set_wrap(true);
             container.append(&label);
-            container.upcast()
         }
-        Some(manifest) => {
-            let state = app.state.borrow();
-            let memory = state.config.int("plugins.max_memory_mb").max(8) as u32;
-            let timeout = state.config.int("plugins.timeout_ms").max(10) as u32;
-            let context = state.registry.context(&plugin.plugin, memory, timeout);
-            drop(state);
-            let mut runtime = folio_plugins::runtime::BuiltinRuntime::default();
-            let response = runtime.call(
-                &manifest,
-                &folio_plugin_sdk::Request {
-                    command: "render".into(),
-                    block_state: plugin.state.clone(),
-                    payload: serde_json::Value::Null,
-                },
-                &context,
-            );
-            match response {
-                Ok(response) => {
-                    container.append(&render_ui_node(app, block, &response.ui));
-                }
-                Err(error) => {
-                    container.append(&gtk::Label::new(Some(&format!(
-                        "El plugin falló de forma aislada: {error}"
-                    ))));
-                }
-            }
-            container.upcast()
+        Err(error) => {
+            container.append(&gtk::Label::new(Some(&format!(
+                "El plugin falló de forma aislada: {error}"
+            ))));
         }
     }
+    container.upcast()
 }
 
 pub fn render_ui_node(app: &Rc<App>, block: &Block, node: &UiNode) -> gtk::Widget {

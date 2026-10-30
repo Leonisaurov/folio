@@ -112,4 +112,4 @@ detiene la beta y se conserva una copia cifrada intacta.
 - [ ] Flatpak/AUR probados en VM limpia (o Plan B documentado).
 - [ ] Rendimiento dentro de presupuesto o excepción aprobada.
 - [ ] Documentación, changelog y checksums del candidato 1.0.
-- [ ] Decisión sobre runtime WASM de terceros (1.0 o 1.1) registrada en ADR.
+- [x] Runtime WASM de terceros implementado (ABI JSON/wasmi, ADR-033).

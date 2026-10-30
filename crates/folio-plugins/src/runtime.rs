@@ -21,6 +21,7 @@ pub struct SandboxLimits {
     pub memory_limit_mb: u32,
     pub timeout: Duration,
     pub max_state_bytes: usize,
+    pub fuel: u64,
 }
 
 impl Default for SandboxLimits {
@@ -29,6 +30,7 @@ impl Default for SandboxLimits {
             memory_limit_mb: 64,
             timeout: Duration::from_millis(2000),
             max_state_bytes: 1024 * 1024,
+            fuel: 10_000_000,
         }
     }
 }
@@ -67,29 +69,6 @@ impl PluginRuntime for BuiltinRuntime {
             .validate()
             .map_err(|error| PluginError::Crash(format!("UI inválida: {error}")))?;
         Ok(response)
-    }
-}
-
-/// Cargador WASM. Mantiene el contrato y falla de forma aislada hasta que el
-/// runtime esté habilitado; la app muestra un marcador y conserva el estado.
-pub struct WasmRuntime {
-    pub wasm: Vec<u8>,
-    pub limits: SandboxLimits,
-}
-
-impl PluginRuntime for WasmRuntime {
-    fn call(
-        &mut self,
-        _manifest: &Manifest,
-        _request: &Request,
-        _context: &HostContext,
-    ) -> Result<Response, PluginError> {
-        if self.wasm.is_empty() {
-            return Err(PluginError::Crash("binario wasm vacío".into()));
-        }
-        Err(PluginError::Crash(
-            "runtime WASM no habilitado en esta compilación; usa un plugin de referencia".into(),
-        ))
     }
 }
 

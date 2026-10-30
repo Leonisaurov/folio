@@ -70,6 +70,10 @@ log "Exportación MD/HTML/PDF"
 test -s "$TMP/nota.md" && test -s "$TMP/nota.html" && test -s "$TMP/nota.pdf"
 record "export_md_html_pdf_ok"
 
+log "Runtime WASM de terceros (plugins/hello)"
+"$BIN" --vault "$TMP/vault" plugin test "$ROOT/plugins/hello" | grep -q "OK"
+record "third_party_wasm_ok"
+
 log "Cifrado y descifrado de bóveda"
 "$BIN" vault init "$TMP/vault-enc" --encrypt --password 'beta-larga' >/dev/null 2>"$TMP/phrase"
 "$BIN" --vault "$TMP/vault-enc" --password 'beta-larga' note create --book today --title 'Secreta' --text 'no debe filtrarse' >/dev/null

@@ -48,6 +48,13 @@ enum Command {
         #[arg(long)]
         vault: PathBuf,
     },
+    /// Compila un módulo WAT de plugin a wasm.
+    CompileWat {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+    },
     /// Genera una nota con N bloques para probar el lienzo.
     GenCanvas {
         #[arg(long, default_value_t = 500)]
@@ -76,6 +83,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         Command::BenchLayout { blocks } => bench_layout(blocks),
         Command::GenDemo { vault } => gen_demo(&vault)?,
+        Command::CompileWat { input, output } => {
+            let wasm = wat::parse_file(&input)?;
+            std::fs::write(&output, wasm)?;
+            println!("{}", output.display());
+        }
         Command::GenCanvas { blocks, out } => gen_canvas(&out, blocks)?,
     }
     Ok(())

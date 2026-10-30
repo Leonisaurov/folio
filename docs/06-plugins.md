@@ -488,3 +488,23 @@ bloques/comandos y UI (profundidad ≤ 32, nodos ≤ 2000). Los cinco plugins de
 referencia (`progress`, `chart`, `diagram`, `stats`, `quickbar`) cubren el catálogo
 1.0. Los binarios WASM de terceros quedan detrás de `PluginRuntime` (ADR-023); el
 contrato y el paquete no cambian al habilitar Wasmtime.
+
+
+## Runtime WASM de terceros (1.0)
+
+`folio_plugins::wasm::WasmRuntime` ejecuta módulos core WebAssembly con el ABI
+JSON `api = 1`:
+
+```text
+folio_api_version() -> i32
+folio_alloc(len: i32) -> i32
+folio_handle(req_ptr: i32, req_len: i32) -> i32
+folio_result_ptr() -> i32
+folio_result_len() -> i32
+memory (exportada)
+```
+
+El host crea una instancia nueva por llamada, aplica fuel/memoria/tiempo, valida
+la UI y expone solo funciones de host con permisos. Ejemplo real:
+`plugins/hello` (`plugin.wat` + `plugin.wasm`). Los módulos no tienen WASI,
+sistema de archivos ni red ambiental.

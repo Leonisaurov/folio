@@ -28,8 +28,8 @@ plugins aislados con UI declarativa.
   encuadres y «Recomponer».
 - **Bloques**: tabla editable, imagen, audio, vídeo, archivo, tarjeta web, dibujo
   vectorial y plugin.
-- **Plugins**: manifiestos, permisos, firma Ed25519, límites, aislamiento de panic
-  y cinco ejemplos (`progress`, `chart`, `diagram`, `stats`, `quickbar`).
+- **Plugins**: manifiestos, permisos, firma Ed25519, límites, aislamiento de panic,
+  runtime WASM de terceros (ABI JSON/wasmi) y cinco ejemplos de referencia.
 - **Vista web viva** opcional con WebKitGTK 6.0 (`--features webkit`): sesión
   efímera, sin cookies, sin descargas, permisos denegados y descarga al salir.
 - **Cifrado opcional** de bóveda con Argon2id + XChaCha20-Poly1305, clave

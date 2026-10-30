@@ -67,8 +67,8 @@ Artefactos en `dist/`; checksums en el manifiesto. El release queda en estado
 
 ## 7. Pendientes que no bloquean el MVP pero sí la narrativa 1.0
 
-- Runtime WASM de terceros (ADR-023): decisión explícita de incluirlo en 1.0 o
-  1.1. El contrato `api = 1` ya está congelado.
+- Runtime WASM de terceros: implementado con ABI JSON/wasmi (ADR-033). El WIT
+  queda como contrato de migración futura.
 - Validación Flatpak/AUR en VM limpia: requiere una máquina limpia y credenciales
   de firma que solo el usuario puede proporcionar.
 - Revisión manual con lector de pantalla/Wayland: requiere un tester humano.

@@ -9,6 +9,7 @@ pub mod builtin;
 pub mod manifest;
 pub mod registry;
 pub mod runtime;
+pub mod wasm;
 
 use folio_plugin_sdk::Permission;
 use serde::{Deserialize, Serialize};

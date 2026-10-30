@@ -268,3 +268,35 @@ fn cli_encrypted_vault_requires_password_and_leaks_no_plaintext() {
     }
     assert!(!vault.join(".folio/index.sqlite").exists());
 }
+
+#[test]
+fn cli_installs_runs_and_tests_third_party_wasm() {
+    let dir = tempfile::tempdir().unwrap();
+    let vault = dir.path().join("vault");
+    init_vault(&vault);
+    let package = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../plugins/hello");
+    let output = folio()
+        .args([
+            "--vault",
+            vault.to_str().unwrap(),
+            "plugin",
+            "install",
+            package.to_str().unwrap(),
+            "--allow-unsigned",
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let test = run(&[
+        "--vault",
+        vault.to_str().unwrap(),
+        "plugin",
+        "test",
+        package.to_str().unwrap(),
+    ]);
+    assert!(test.contains("io.github.example.hello OK"), "{test}");
+}

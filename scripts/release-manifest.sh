@@ -73,8 +73,8 @@ Verificación ejecutada:
   validación manual; los manifiestos existen.
 - [ ] **Revisión manual con Orca/Wayland**: la auditoría automatizada y la lista de
   bloques están hechas, pero falta la prueba con lector real.
-- [ ] **Runtime WASM de terceros**: decisión de incluirlo en 1.0 o 1.1 (ADR-023).
-  Los cinco plugins de referencia y \`api = 1\` están congelados.
+- [x] **Runtime WASM de terceros**: implementado con ABI JSON/wasmi (ADR-033);
+  los cinco plugins de referencia, \`api = 1\` y \`plugins/hello\` están probados.
 - [ ] **Publicación**: tag firmado, release notes y rollback firmado.
 
 ## Cómo continuar

@@ -198,6 +198,16 @@ Cada requisito del producto tiene una etapa que lo construye y una prueba que lo
 | RNF-18…RNF-20 recuperación | `cargo test -p folio-store backup trash versions`, `scripts/chaos.sh` |
 | RNF-21…RNF-22 aislamiento | `scripts/automation/ui.sh` (Xvfb privado), `keep-awake.sh` |
 
+### 9.6 Runtime WASM de terceros (E10/1.0)
+
+| Requisito | Evidencia |
+|---|---|
+| ABI api=1 y módulo real | `crates/folio-plugins/src/wasm.rs`, `plugins/hello/plugin.wat` + `.wasm` |
+| Instalación y ejecución | `crates/folio-app/tests/cli.rs::cli_installs_runs_and_tests_third_party_wasm` |
+| Sandbox | tests `infinite_loop_is_stopped_by_fuel`, `memory_limit_is_enforced`, `trap_is_isolated_as_crash`, `invalid_ui_response_is_rejected` |
+| Sin red/WASI | `HostContext` y ABI sin WASI; `beta-check` sin clientes de red |
+| UI y estado | `WasmRuntime` devuelve `Response`/`UiNode` validado; `AppState::plugin_run` |
+
 ### 9.5 Release 1.0.0 (semana 20)
 
 | Requisito | Evidencia |

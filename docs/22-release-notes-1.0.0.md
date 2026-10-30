@@ -34,7 +34,8 @@ dist/beta/0.1.0/          # canal beta preparado en la semana 19
 2. Beta real de 30 días con testers; el canal y checklist están listos.
 3. Validación Flatpak/AUR en una VM limpia.
 4. Revisión manual con Orca/Wayland.
-5. Decisión sobre el runtime WASM de terceros (1.0 o 1.1).
+5. ~~Decisión sobre el runtime WASM~~: implementado con ABI JSON/wasmi; queda
+   validar la guía con un plugin externo.
 
 Los gates automáticos (plan, tests, UI aislada, a11y, PDF, cifrado, auditoría,
 AppStream y artefactos) están verdes. Ver `dist/RELEASE-1.0.0.md`.

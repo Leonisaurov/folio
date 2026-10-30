@@ -1,12 +1,13 @@
 # Plugins de referencia
 
-`progress`, `chart`, `diagram`, `stats` y `quickbar` son los plugins de ejemplo.
+`progress`, `chart`, `diagram`, `stats` y `quickbar` son los plugins de referencia.
+`hello` es un plugin de terceros mínimo que se ejecuta con el runtime WASM real.
 Cada carpeta contiene su `manifest.toml` y un `plugin.wasm` mínimo de marcador.
 
-En esta compilación del MVP el host reconoce estos IDs y ejecuta su
-implementación de referencia en Rust usando exactamente el mismo contrato
-(`Manifest` + `Request`/`Response` + `UiNode`). El cargador WASM de terceros
-(Wasmtime + ABI JSON) queda para 1.0; ver ADR-021 en `docs/10-decisiones.md`.
+El host reconoce estos IDs y ejecuta su implementación de referencia en Rust
+usando exactamente el mismo contrato (`Manifest` + `Request`/`Response` +
+`UiNode`). Los plugins de terceros se ejecutan con `WasmRuntime` (wasmi, ABI JSON
+`api = 1`); ver ADR-033 en `docs/10-decisiones.md` y `plugins/hello`.
 
 ## Probar
 
