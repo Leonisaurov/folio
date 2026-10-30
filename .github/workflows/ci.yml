@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validar plan
+        run: ./scripts/automation/plan.sh
+
+  test:
+    name: Code + UI (Xvfb)
+    runs-on: ubuntu-24.04
+    needs: plan
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detectar Cargo.toml
+        id: cargo
+        shell: bash
+        run: |
+          if [[ -f Cargo.toml ]]; then
+            echo "exists=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=no" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Instalar Rust
+        if: steps.cargo.outputs.exists == 'yes'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Dependencias del sistema
+        if: steps.cargo.outputs.exists == 'yes'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-4-dev libadwaita-1-dev \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            poppler-utils xvfb dbus-x11 appstream desktop-file-utils
+
+      - name: Cache de Cargo
+        if: steps.cargo.outputs.exists == 'yes'
+        uses: Swatinem/rust-cache@v2
+
+      - name: Herramientas de auditoría
+        if: steps.cargo.outputs.exists == 'yes'
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-audit,cargo-deny
+
+      - name: Suite aislada
+        run: ./scripts/automation/all.sh
+
+      - name: Vista web viva (WebKitGTK 6.0)
+        if: steps.cargo.outputs.exists == 'yes'
+        run: |
+          sudo apt-get install -y libwebkitgtk-6.0-dev
+          ./scripts/webkit.sh
+
+      - name: Accesibilidad (escala 200 %, foco y alternativa al lienzo)
+        if: steps.cargo.outputs.exists == 'yes'
+        run: ./scripts/a11y.sh
+
+      - name: Paquete .deb verificable
+        if: steps.cargo.outputs.exists == 'yes'
+        run: ./scripts/build-deb.sh
+
+      - name: Validar AppStream y escritorio
+        run: |
+          sudo apt-get install -y appstream desktop-file-utils
+          appstreamcli validate flatpak/io.github.leonisauro.Folio.metainfo.xml
+          desktop-file-validate flatpak/io.github.leonisauro.Folio.desktop
+
+      - name: Subir artefactos si falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: folio-artifacts
+          path: .artifacts/
+          if-no-files-found: ignore
